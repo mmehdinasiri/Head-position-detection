@@ -132,7 +132,6 @@ const human = () => {
 	function takepicture() {
 		var context = canvasPhoto.getContext("2d");
 		console.log("start taking photo");
-		console.log(width, height);
 		if (width && height) {
 			canvasPhoto.width = width;
 			canvasPhoto.height = height;
@@ -178,7 +177,6 @@ const human = () => {
 			"canplay",
 			function (ev) {
 				if (!streaming) {
-					console.log(video.videoHeight);
 					height = video.videoHeight;
 					width = video.videoWidth;
 

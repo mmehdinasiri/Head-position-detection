@@ -1,9 +1,11 @@
 import "../scss/app.scss";
 import "regenerator-runtime/runtime";
 
-/* Your JS Code goes here */
-import human from "./human";
+const page = location.pathname
+	.substring(location.pathname.lastIndexOf("/") + 1)
+	.split(".")[0];
 
-if (document.location.href.includes("human")) {
-	human();
-}
+if (page !== "index")
+	import(`./${page}`).then((run) => {
+		run.default();
+	});

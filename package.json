@@ -87,6 +87,7 @@
 	"dependencies": {
 		"@vladmandic/human": "^2.2.2",
 		"bootstrap": "^5.1.1",
+		"face-api.js": "^0.22.2",
 		"os-browserify": "^0.3.0"
 	}
 }
