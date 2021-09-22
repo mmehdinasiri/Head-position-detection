@@ -1,0 +1,59 @@
+.yaw {
+	display: flex;
+	position: absolute;
+	bottom: 16px;
+	height: 30px;
+	width: 100%;
+}
+.pitch {
+	position: absolute;
+	top: 0;
+	left: 0;
+	width: 30px;
+	height: 100%;
+	display: flex;
+}
+.yaw-bar {
+	width: 90%;
+	height: 15px;
+	border-radius: 16px;
+	background-color: white;
+	position: relative;
+	margin: auto;
+}
+.yaw-pointer {
+	transition: all 200ms ease-in-out;
+	position: absolute;
+	width: 30px;
+	height: 30px;
+	border-radius: 100%;
+	background-color: red;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+.pitch-bar {
+	height: 90%;
+	width: 15px;
+	border-radius: 16px;
+	background-color: white;
+	position: relative;
+	margin: auto;
+}
+.pitch-pointer {
+	transition: all 200ms ease-in-out;
+	position: absolute;
+	height: 30px;
+	width: 30px;
+	border-radius: 100%;
+	background-color: red;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+}
+
+.photo-item {
+	width: 120px;
+	height: auto;
+	margin: 8px;
+}
