@@ -1,7 +1,7 @@
 import * as faceapi from "face-api.js";
 const SSD_MOBILENETV1 = "ssd_mobilenetv1";
 const TINY_FACE_DETECTOR = "tiny_face_detector";
-let selectedFaceDetector = TINY_FACE_DETECTOR;
+let selectedFaceDetector = SSD_MOBILENETV1;
 let minConfidence = 0.5;
 const scoreThreshold = 0.5;
 
@@ -11,7 +11,7 @@ const faceApi = () => {
 	var width = 320;
 	var height = 240;
 	const video = document.getElementById("video");
-	const canvas = document.getElementById("canvas");
+	// const canvas = document.getElementById("canvas");
 	const videoContainer = document.querySelector("[data-video-container]");
 	const yaw = document.querySelector("[data-yaw]");
 	const roll = document.querySelector("[data-roll]");
@@ -36,7 +36,7 @@ const faceApi = () => {
 	var streamObj = null;
 
 	function clearphoto() {
-		var context = canvas.getContext("2d");
+		var context = canvasPhoto.getContext("2d");
 		context.fillStyle = "#AAA";
 		context.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -115,8 +115,9 @@ const faceApi = () => {
 			video.onloadeddata = () => resolve(true);
 		});
 		await ready; // wait until stream is ready
-		canvas.width = video.videoWidth; // resize output canvas to match input
-		canvas.height = video.videoHeight;
+		// canvas.width = video.videoWidth;
+		// canvas.height = video.videoHeight;
+
 		video.addEventListener(
 			"canplay",
 			function (ev) {
@@ -127,7 +128,6 @@ const faceApi = () => {
 					if (isNaN(height)) {
 						height = width / (4 / 3);
 					}
-
 					video.setAttribute("width", width);
 					video.setAttribute("height", height);
 					canvasPhoto.setAttribute("width", width);
@@ -159,14 +159,30 @@ const faceApi = () => {
 					var ry =
 						(eye_left[0] + (eye_right[0] - eye_left[0]) / 2 - nose[0]) /
 						res.detection.box.width;
+					//-ax+b = 0
+					//ax+b = 100
+					let yawNumber = Number(-ry.toFixed(2) * 333 + 50).toFixed(0);
+					let pitchNumber = Number(-rx.toFixed(2) * 333 - 100).toFixed(0);
 
-					document.querySelector(".rx").textContent = rx;
-					document.querySelector(".ry").textContent = ry;
-					// console.log(
-					//   res.detection.score, //Face detection score
-					//   ry, //Closest to 0 is looking forward
-					//   rx // Closest to 0.5 is looking forward, closest to 0 is looking up
-					// );
+					yawNumber = yawNumber > 100 ? 100 : yawNumber < 0 ? 0 : yawNumber;
+					pitchNumber =
+						pitchNumber > 100 ? 100 : pitchNumber < 0 ? 0 : pitchNumber;
+
+					yaw.innerHTML =
+						"yaw: " +
+						ry.toFixed(2) +
+						"    converted: " +
+						Number(-ry.toFixed(2) * 333 + 50).toFixed(0);
+
+					pitch.innerHTML =
+						"pitch: " +
+						rx.toFixed(2) +
+						"    converted: " +
+						Number(-rx.toFixed(2) * 333 - 100).toFixed(0);
+
+					yawPinter.style.left = yawNumber + "%";
+					pitchPinter.style.top = pitchNumber + "%";
+
 					let state = "undetected";
 					if (res.detection.score > 0.3) {
 						state = "front";
@@ -181,7 +197,7 @@ const faceApi = () => {
 							}
 						}
 					}
-					document.querySelector(".state").textContent = state;
+					// document.querySelector(".state").textContent = state;
 				} else {
 					// Face was not detected
 				}
@@ -202,7 +218,8 @@ const faceApi = () => {
 
 	async function main() {
 		await faceapi.loadFaceLandmarkModel("../static/lib/faceApi/weights/");
-		await faceapi.loadTinyFaceDetectorModel("../static/lib/faceApi/weights/");
+		// await faceapi.loadTinyFaceDetectorModel("../static/lib/faceApi/weights/");
+		await faceapi.loadSsdMobilenetv1Model("../static/lib/faceApi/weights/");
 
 		await webCam();
 		await onPlay();
