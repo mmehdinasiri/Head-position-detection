@@ -1,4 +1,4 @@
-import JEELIZFACEFILTER from "../static/lib/jeeliz/dist/jeelizFaceFilter.module";
+import JEELIZFACEFILTER from "../static/lib/jeeliz/jeelizFaceFilter.module";
 
 const Jeeliz = () => {
 	console.log("Jeeliz");
@@ -207,7 +207,7 @@ const Jeeliz = () => {
 			maxFacesDetected: 1,
 			animateDelay: 1, // let small delay to avoid DOM freeze
 			canvasId: "canvas",
-			NNCPath: "../static/lib/jeeliz/dist/neuralNets/",
+			NNCPath: "../static/lib/jeeliz/neuralNets/",
 			videoElem: video,
 			callbackReady: function (errCode, spec) {
 				console.log("callbackReady");
