@@ -39,6 +39,7 @@ const Jeeliz = () => {
 	const canvasPhoto = document.getElementById("canvas-photo");
 	const photo = document.getElementById("photo");
 	const photoListEl = document.querySelector("[data-photo-list]");
+	const dataLoading = document.querySelector("[data-loading]");
 
 	var photoList = [];
 	var takePhotoInterval = null;
@@ -198,6 +199,7 @@ const Jeeliz = () => {
 		}
 	}
 	async function main(errCode, bestVideoSettings) {
+		dataLoading.classList.remove("d-none");
 		await webCam();
 		if (errCode) {
 			alert(errCode);
@@ -207,10 +209,11 @@ const Jeeliz = () => {
 			maxFacesDetected: 1,
 			animateDelay: 1, // let small delay to avoid DOM freeze
 			canvasId: "canvas",
-			NNCPath: "../static/lib/jeeliz/neuralNets/",
+			NNCPath: "./static/lib/jeeliz/neuralNets/",
 			videoElem: video,
 			callbackReady: function (errCode, spec) {
 				console.log("callbackReady");
+				dataLoading.classList = "loading d-none";
 				init_scene(spec);
 			},
 

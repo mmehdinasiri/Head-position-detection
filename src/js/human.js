@@ -77,6 +77,7 @@ const human = () => {
 	const canvasPhoto = document.getElementById("canvas-photo");
 	const photo = document.getElementById("photo");
 	const photoListEl = document.querySelector("[data-photo-list]");
+	const dataLoading = document.querySelector("[data-loading]");
 
 	var photoList = [];
 	var takePhotoInterval = null;
@@ -203,6 +204,7 @@ const human = () => {
 	}
 
 	async function drawLoop() {
+		dataLoading.classList = "loading d-none";
 		const interpolated = await human.next(result); // interpolates results based on last known results
 		await human.draw.canvas(video, canvas); // draw input video to output canvas
 		if (interpolated.face[0]) {
@@ -212,6 +214,7 @@ const human = () => {
 	}
 
 	async function main() {
+		dataLoading.classList.remove("d-none");
 		await human.load();
 		await webCam();
 

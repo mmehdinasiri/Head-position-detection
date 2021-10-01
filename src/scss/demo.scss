@@ -51,7 +51,13 @@ a {
 		color: $black;
 	}
 }
+.link {
+	color: $link-color;
 
+	&:hover {
+		color: $black;
+	}
+}
 address {
 	color: $accent-color;
 }

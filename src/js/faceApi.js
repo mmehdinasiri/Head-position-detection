@@ -1,7 +1,7 @@
 import * as faceapi from "face-api.js";
 const SSD_MOBILENETV1 = "ssd_mobilenetv1";
 const TINY_FACE_DETECTOR = "tiny_face_detector";
-let selectedFaceDetector = SSD_MOBILENETV1;
+let selectedFaceDetector = TINY_FACE_DETECTOR;
 let minConfidence = 0.5;
 const scoreThreshold = 0.5;
 
@@ -29,6 +29,7 @@ const faceApi = () => {
 	const canvasPhoto = document.getElementById("canvas-photo");
 	const photo = document.getElementById("photo");
 	const photoListEl = document.querySelector("[data-photo-list]");
+	const dataLoading = document.querySelector("[data-loading]");
 
 	var photoList = [];
 	var takePhotoInterval = null;
@@ -154,6 +155,7 @@ const faceApi = () => {
 					var nose = getMeanPosition(res.landmarks.getNose());
 					var mouth = getMeanPosition(res.landmarks.getMouth());
 					var jaw = getTop(res.landmarks.getJawOutline());
+					dataLoading.classList = "loading d-none";
 
 					var rx = (jaw - mouth[1]) / res.detection.box.height;
 					var ry =
@@ -217,9 +219,10 @@ const faceApi = () => {
 	}
 
 	async function main() {
-		await faceapi.loadFaceLandmarkModel("../static/lib/faceApi/weights/");
-		// await faceapi.loadTinyFaceDetectorModel("../static/lib/faceApi/weights/");
-		await faceapi.loadSsdMobilenetv1Model("../static/lib/faceApi/weights/");
+		dataLoading.classList.remove("d-none");
+		await faceapi.loadFaceLandmarkModel("./static/lib/faceApi/weights/");
+		// await faceapi.loadSsdMobilenetv1Model("./static/lib/faceApi/weights/");
+		await faceapi.loadTinyFaceDetectorModel("./static/lib/faceApi/weights/");
 
 		await webCam();
 		await onPlay();
