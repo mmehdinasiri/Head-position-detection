@@ -210,7 +210,11 @@ const Jeeliz = () => {
 			animateDelay: 1, // let small delay to avoid DOM freeze
 			canvasId: "canvas",
 			NNCPath: "./static/lib/jeeliz/neuralNets/",
-			videoElem: video,
+			videoSettings: {
+				videoElement: video,
+				facingMode: "user",
+				flipX: false,
+			},
 			callbackReady: function (errCode, spec) {
 				console.log("callbackReady");
 				dataLoading.classList = "loading d-none";
