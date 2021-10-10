@@ -34,8 +34,19 @@
 
 			<div class="loading d-none" data-loading></div>
 			<div class="position-relative d-none text-center" data-video-container>
-				<canvas id="canvas" style="margin: 0 auto"></canvas>
-				<video id="video" playsinline style="display: none"></video>
+				<canvas
+					id="canvas"
+					style="margin: 0 auto; transform: scale(-1, 1)"
+				></canvas>
+				<img
+					class="video-record-frame"
+					src="images/content//video-record-fram.svg"
+				/>
+				<video
+					id="video"
+					playsinline
+					style="display: none; transform: scale(-1, 1)"
+				></video>
 				<div class="yaw">
 					<div data-yaw-bar class="yaw-bar">
 						<div data-yaw-pointer class="yaw-pointer"></div>

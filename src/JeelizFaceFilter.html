@@ -36,16 +36,46 @@
 			</div>
 
 			<div class="loading d-none" data-loading></div>
-			<div class="position-relative d-none text-center" data-video-container>
-				<canvas id="canvas" style="margin: 0 auto; position: absolute"></canvas>
+			<div class="snapshot-video d-none" data-video-container>
+				<canvas
+					id="canvas"
+					style="margin: 0 auto; position: absolute; width: 100px !important"
+				></canvas>
+				<video
+					style="
+						margin: 0 auto;
+						position: absolute;
+						display: none;
+						transform: scale(-1, 1);
+					"
+					id="video2"
+					autoplay
+					muted
+					playsinline
+				></video>
 				<video
 					id="video"
 					autoplay
 					muted
 					playsinline
-					width="320"
-					height="240"
+					style="
+						margin: 0 auto;
+						transform: scale(-1, 1);
+						position: absolute;
+						top: 0;
+						left: 0;
+						right: 0;
+						bottom: 0;
+					"
 				></video>
+				<!-- <img
+					class="video-record-frame"
+					src="images/content//video-record-fram.svg"
+				/> -->
+				<div
+					class="video-record-frame"
+					style="background-image: url(images/content//video-record-fram.svg)"
+				></div>
 				<div class="yaw">
 					<div data-yaw-bar class="yaw-bar">
 						<div data-yaw-pointer class="yaw-pointer"></div>

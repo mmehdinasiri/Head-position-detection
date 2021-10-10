@@ -20,6 +20,21 @@
 	background-color: white;
 	position: relative;
 	margin: auto;
+	opacity: 50%;
+	z-index: 12;
+	&::after {
+		content: "";
+		border-radius: 30px;
+		display: block;
+		height: 15px;
+		width: 80px;
+		background-color: #00a796;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 2;
+	}
 }
 .yaw-pointer {
 	transition: all 200ms ease-in-out;
@@ -31,6 +46,7 @@
 	top: 50%;
 	left: 50%;
 	transform: translate(-50%, -50%);
+	z-index: 12;
 }
 .pitch-bar {
 	height: 90%;
@@ -39,6 +55,21 @@
 	background-color: white;
 	position: relative;
 	margin: auto;
+	opacity: 50%;
+	z-index: 12;
+	&::after {
+		content: "";
+		border-radius: 30px;
+		display: block;
+		height: 80px;
+		width: 15px;
+		background-color: #00a796;
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform: translate(-50%, -50%);
+		z-index: 2;
+	}
 }
 .pitch-pointer {
 	transition: all 200ms ease-in-out;
@@ -48,6 +79,7 @@
 	border-radius: 100%;
 	background-color: red;
 	top: 50%;
+	z-index: 12;
 	left: 50%;
 	transform: translate(-50%, -50%);
 }
@@ -56,4 +88,42 @@
 	width: auto;
 	height: auto;
 	margin: 8px;
+}
+.video-record-frame {
+	position: absolute;
+	bottom: 0;
+	top: 0;
+	left: 0;
+	z-index: 10;
+	right: 0;
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+	background-repeat: no-repeat;
+	background-position: center;
+}
+.snapshot-video {
+	display: flex;
+	margin: auto;
+	position: relative;
+	padding: 6px;
+	background: linear-gradient(to right, #00a796 4px, transparent 4px) 0 0,
+		linear-gradient(to right, #00a796 4px, transparent 4px) 0 100%,
+		linear-gradient(to left, #00a796 4px, transparent 4px) 100% 0,
+		linear-gradient(to left, #00a796 4px, transparent 4px) 100% 100%,
+		linear-gradient(to bottom, #00a796 4px, transparent 4px) 0 0,
+		linear-gradient(to bottom, #00a796 4px, transparent 4px) 100% 0,
+		linear-gradient(to top, #00a796 4px, transparent 4px) 0 100%,
+		linear-gradient(to top, #00a796 4px, transparent 4px) 100% 100%;
+	background-repeat: no-repeat;
+	background-size: 20px 20px;
+	position: relative;
+	z-index: 1;
+	overflow: hidden;
+}
+.snapshot-video video {
+	width: 100%;
+	height: 100%;
+	object-fit: cover;
+	position: absolute; /* magic sauce */
 }

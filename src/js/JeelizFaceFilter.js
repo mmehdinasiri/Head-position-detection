@@ -21,6 +21,7 @@ const Jeeliz = () => {
 	var width = 320;
 	var height = 240;
 	const video = document.getElementById("video");
+	const video2 = document.getElementById("video2");
 	const canvas = document.getElementById("canvas");
 	const videoContainer = document.querySelector("[data-video-container]");
 	const yaw = document.querySelector("[data-yaw]");
@@ -73,47 +74,53 @@ const Jeeliz = () => {
 		}
 	}
 
-	async function webCam() {
+	async function webCam(initVideo) {
+		console.log("innerHeight: ", window.innerHeight);
+		var correctHeight = window.innerHeight - 190;
+		//fix video size base on device screen size and device type
+
+		videoContainer.style.height = window.innerHeight / 1.75 + "px";
+		videoContainer.style.width = (window.innerHeight / 1.75) * 0.75 + "px";
 		const constraints = {
-			audio: false,
+			audio: true,
 			video: {
+				width: (window.innerHeight / 1.75) * 0.75,
+				height: window.innerHeight / 1.75,
 				facingMode: "user",
-				resizeMode: "none",
-				width: { ideal: document.body.clientWidth },
+				frameRate: { max: 30 },
 			},
 		};
 		navigator.mediaDevices
 			.getUserMedia(constraints)
 			.then(function (stream) {
-				video.srcObject = stream;
+				initVideo.srcObject = stream;
 				streamObj = stream;
-				video.play();
+				initVideo.play();
 			})
 			.catch(function (err) {
 				console.log("An error occurred: " + err);
 			});
 
 		const ready = new Promise((resolve) => {
-			video.onloadeddata = () => resolve(true);
+			initVideo.onloadeddata = () => resolve(true);
 		});
+
 		await ready; // wait until stream is ready
-		console.log(video.videoWidth);
-		console.log(canvas);
-		canvas.width = video.videoWidth; // resize output canvas to match input
-		canvas.height = video.videoHeight;
+		canvas.width = initVideo.videoWidth; // resize output canvas to match input
+		canvas.height = initVideo.videoHeight;
 		video.addEventListener(
 			"canplay",
 			function (ev) {
 				if (!streaming) {
-					height = video.videoHeight;
-					width = video.videoWidth;
+					height = initVideo.videoHeight;
+					width = initVideo.videoWidth;
 
 					if (isNaN(height)) {
 						height = width / (4 / 3);
 					}
 
-					video.setAttribute("width", width);
-					video.setAttribute("height", height);
+					initVideo.setAttribute("width", width);
+					initVideo.setAttribute("height", height);
 					canvasPhoto.setAttribute("width", width);
 					canvasPhoto.setAttribute("height", height);
 					streaming = true;
@@ -178,8 +185,8 @@ const Jeeliz = () => {
 			// pitch.innerHTML = x.toFixed(2);
 			// roll.innerHTML = z.toFixed(2);
 
-			let yawNumber = Number(x.toFixed(2) * 72 + 50).toFixed(0);
-			let pitchNumber = Number(y.toFixed(2) * -100 + 50).toFixed(0);
+			let yawNumber = Number(-x.toFixed(2) * 72 + 50).toFixed(0);
+			let pitchNumber = Number(y.toFixed(2) * -100 + 40).toFixed(0);
 			yaw.innerHTML =
 				"yaw: " +
 				x.toFixed(2) +
@@ -200,7 +207,8 @@ const Jeeliz = () => {
 	}
 	async function main(errCode, bestVideoSettings) {
 		dataLoading.classList.remove("d-none");
-		await webCam();
+		await webCam(video);
+		await webCam(video2);
 		if (errCode) {
 			alert(errCode);
 			return;
@@ -211,7 +219,7 @@ const Jeeliz = () => {
 			canvasId: "canvas",
 			NNCPath: "./static/lib/jeeliz/neuralNets/",
 			videoSettings: {
-				videoElement: video,
+				videoElement: video2,
 				facingMode: "user",
 				flipX: false,
 			},
