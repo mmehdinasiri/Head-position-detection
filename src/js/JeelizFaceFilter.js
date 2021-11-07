@@ -1,4 +1,6 @@
 import JEELIZFACEFILTER from "../static/lib/jeeliz/jeelizFaceFilter.module";
+const fs = require("fs");
+import gifshot from "gifshot";
 
 const Jeeliz = () => {
 	console.log("Jeeliz");
@@ -20,8 +22,11 @@ const Jeeliz = () => {
 
 	var width = 320;
 	var height = 240;
+	var videoWidth = 320;
+	var videoHeight = 240;
+	var timer;
+
 	const video = document.getElementById("video");
-	const video2 = document.getElementById("video2");
 	const canvas = document.getElementById("canvas");
 	const videoContainer = document.querySelector("[data-video-container]");
 	const yaw = document.querySelector("[data-yaw]");
@@ -41,6 +46,12 @@ const Jeeliz = () => {
 	const photo = document.getElementById("photo");
 	const photoListEl = document.querySelector("[data-photo-list]");
 	const dataLoading = document.querySelector("[data-loading]");
+	const dataFps = document.querySelector("[data-fps]");
+	const timeElm = document.querySelector("[data-time]");
+	var fps = dataFps.value;
+
+	const timeIntervalElm = document.querySelector("[data-time-input]");
+	var timeInterval = timeIntervalElm.value;
 
 	var photoList = [];
 	var takePhotoInterval = null;
@@ -60,9 +71,9 @@ const Jeeliz = () => {
 		var context = canvasPhoto.getContext("2d");
 		console.log("start taking photo");
 		if (width && height) {
-			canvasPhoto.width = width;
-			canvasPhoto.height = height;
-			context.drawImage(video, 0, 0, width, height);
+			canvasPhoto.width = videoWidth;
+			canvasPhoto.height = videoHeight;
+			context.drawImage(video, 0, 0, videoWidth, videoHeight);
 
 			var data = canvasPhoto.toDataURL("image/jpeg");
 			// photo.setAttribute("src", data);
@@ -74,18 +85,28 @@ const Jeeliz = () => {
 		}
 	}
 
-	async function webCam(initVideo) {
-		console.log("innerHeight: ", window.innerHeight);
-		var correctHeight = window.innerHeight - 190;
+	async function webCam() {
+		// var correctHeight = window.innerHeight - 190;
+		var correctHeight = screen.height - 190;
 		//fix video size base on device screen size and device type
+		if (screen.width <= 720) {
+			videoContainer.setAttribute(
+				"style",
+				"height:" + correctHeight + "px !important"
+			);
+			videoWidth = correctHeight;
+		} else {
+			videoContainer.style.height = screen.height / 1.75 + "px";
+			videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
+			videoWidth = (screen.height / 1.75) * 0.75;
+			videoHeight = screen.height / 1.75;
+		}
 
-		videoContainer.style.height = window.innerHeight / 1.75 + "px";
-		videoContainer.style.width = (window.innerHeight / 1.75) * 0.75 + "px";
 		const constraints = {
 			audio: true,
 			video: {
-				width: (window.innerHeight / 1.75) * 0.75,
-				height: window.innerHeight / 1.75,
+				width: videoWidth,
+				height: videoHeight,
 				facingMode: "user",
 				frameRate: { max: 30 },
 			},
@@ -93,34 +114,37 @@ const Jeeliz = () => {
 		navigator.mediaDevices
 			.getUserMedia(constraints)
 			.then(function (stream) {
-				initVideo.srcObject = stream;
+				video.srcObject = stream;
 				streamObj = stream;
-				initVideo.play();
+				video.play();
 			})
 			.catch(function (err) {
 				console.log("An error occurred: " + err);
 			});
 
 		const ready = new Promise((resolve) => {
-			initVideo.onloadeddata = () => resolve(true);
+			video.onloadeddata = () => resolve(true);
 		});
 
 		await ready; // wait until stream is ready
-		canvas.width = initVideo.videoWidth; // resize output canvas to match input
-		canvas.height = initVideo.videoHeight;
+		canvas.width = videoWidth;
+		canvas.height = videoHeight;
 		video.addEventListener(
 			"canplay",
 			function (ev) {
 				if (!streaming) {
-					height = initVideo.videoHeight;
-					width = initVideo.videoWidth;
+					height = videoHeight;
+					width = videoWidth;
+					console.log(height);
+					console.log(videoHeight);
 
 					if (isNaN(height)) {
+						console.log("innnnn");
 						height = width / (4 / 3);
 					}
 
-					initVideo.setAttribute("width", width);
-					initVideo.setAttribute("height", height);
+					video.setAttribute("width", width);
+					video.setAttribute("height", height);
 					canvasPhoto.setAttribute("width", width);
 					canvasPhoto.setAttribute("height", height);
 					streaming = true;
@@ -208,7 +232,6 @@ const Jeeliz = () => {
 	async function main(errCode, bestVideoSettings) {
 		dataLoading.classList.remove("d-none");
 		await webCam(video);
-		await webCam(video2);
 		if (errCode) {
 			alert(errCode);
 			return;
@@ -219,7 +242,7 @@ const Jeeliz = () => {
 			canvasId: "canvas",
 			NNCPath: "./static/lib/jeeliz/neuralNets/",
 			videoSettings: {
-				videoElement: video2,
+				videoElement: video,
 				facingMode: "user",
 				flipX: false,
 			},
@@ -255,17 +278,60 @@ const Jeeliz = () => {
 		startBtn.addEventListener("click", () => {
 			main();
 		});
-		startBtnTackingPhoto.addEventListener("click", () => {
-			takePhotoInterval = setInterval(takepicture, 250);
+		dataFps.addEventListener("change", function () {
+			fps = this.value;
 		});
-		stopBtnTackingPhoto.addEventListener("click", () => {
+		timeIntervalElm.addEventListener("input", function () {
+			timeInterval = this.value;
+		});
+
+		startBtnTackingPhoto.addEventListener("click", () => {
+			var time = 0;
+			timer = setInterval(function () {
+				if (time == timeInterval) {
+					stopRecordingFn();
+					clearInterval(timer);
+				}
+
+				timeElm.innerHTML = time;
+				time = time + 1;
+			}, 1000);
+			console.log(fps);
+			takePhotoInterval = setInterval(takepicture, fps);
+		});
+		var stopRecordingFn = () => {
+			dataLoading.classList.toggle("d-none");
+			clearInterval(timer);
 			clearInterval(takePhotoInterval);
-			photoList.forEach((item) => {
-				var img = document.createElement("img");
-				img.classList = "photo-item";
-				img.src = item;
-				photoListEl.appendChild(img);
-			});
+			// gifshot.stopVideoStreaming();
+			// photoList.forEach((item) => {
+			// 	var img = document.createElement("img");
+			// 	img.classList = "photo-item";
+			// 	img.src = item;
+			// 	photoListEl.appendChild(img);
+			// });
+
+			gifshot.createGIF(
+				{
+					images: photoList,
+					gifWidth: videoWidth,
+					gifHeight: videoHeight,
+				},
+				function (obj) {
+					if (!obj.error) {
+						console.log("start");
+						dataLoading.classList.toggle("d-none");
+						var image = obj.image,
+							animatedImage = document.createElement("img");
+						animatedImage.src = image;
+						document.body.appendChild(animatedImage);
+						photoList = [];
+					}
+				}
+			);
+		};
+		stopBtnTackingPhoto.addEventListener("click", () => {
+			stopRecordingFn();
 		});
 		stopBtn.addEventListener("click", () => {
 			stopStreamedVideo(video);

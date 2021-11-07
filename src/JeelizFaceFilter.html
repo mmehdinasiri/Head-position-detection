@@ -33,6 +33,15 @@
 				<button class="btn btn-danger mx-2" data-stop-tacking-photo>
 					stop tacking photo
 				</button>
+				<select data-fps>
+					<option value="333">3 FPS</option>
+					<option value="250">4 FPS</option>
+				</select>
+				<div class="mx-4">
+					<label>set interval time</label>
+					<input type="number" data-time-input value="25" />
+				</div>
+				<div>timer: <span data-time></span></div>
 			</div>
 
 			<div class="loading d-none" data-loading></div>

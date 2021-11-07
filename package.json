@@ -88,6 +88,8 @@
 		"@vladmandic/human": "^2.2.2",
 		"bootstrap": "^5.1.1",
 		"face-api.js": "^0.22.2",
+		"gifencoder": "^2.0.1",
+		"gifshot": "^0.4.5",
 		"os-browserify": "^0.3.0"
 	}
 }
