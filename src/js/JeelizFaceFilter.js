@@ -25,6 +25,10 @@ const Jeeliz = () => {
 	var videoWidth = 320;
 	var videoHeight = 240;
 	var timer;
+	var maxYaw = 0;
+	var minYaw = 0;
+	var maxPitch = 0;
+	var minPitch = 0;
 
 	const video = document.getElementById("video");
 	const canvas = document.getElementById("canvas");
@@ -49,6 +53,8 @@ const Jeeliz = () => {
 	const dataFps = document.querySelector("[data-fps]");
 	const timeElm = document.querySelector("[data-time]");
 	var fps = dataFps.value;
+	const yawMaxMin = document.querySelector("[yaw-max-min]");
+	const pitchMaxMin = document.querySelector("[pitch-max-min]");
 
 	const timeIntervalElm = document.querySelector("[data-time-input]");
 	var timeInterval = timeIntervalElm.value;
@@ -191,6 +197,7 @@ const Jeeliz = () => {
 			// FACE DETECTED
 			ISDETECTED = true;
 		}
+		console.log("----------------------");
 		if (ISDETECTED) {
 			// move the cube in order to fit the head:
 			const tanFOV = Math.tan((CAMERA.aspect * CAMERA.fov * Math.PI) / 360); //tan(FOV/2), in radians
@@ -205,7 +212,6 @@ const Jeeliz = () => {
 			const z = -D - 0.5; // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
 			const x = xv * D * tanFOV;
 			const y = (yv * D * tanFOV) / CAMERA.aspect;
-
 			// pitch.innerHTML = x.toFixed(2);
 			// roll.innerHTML = z.toFixed(2);
 
@@ -227,6 +233,19 @@ const Jeeliz = () => {
 
 			yawPinter.style.left = yawNumber + "%";
 			pitchPinter.style.top = pitchNumber + "%";
+			if (x > 0 && x > maxYaw) {
+				maxYaw = x;
+			}
+			if (x < 0 && x < minYaw) {
+				minYaw = x;
+			}
+
+			if (y > 0 && y > maxPitch) {
+				maxPitch = y;
+			}
+			if (y < 0 && y < minPitch) {
+				minPitch = y;
+			}
 		}
 	}
 	async function main(errCode, bestVideoSettings) {
@@ -298,6 +317,10 @@ const Jeeliz = () => {
 			}, 1000);
 			console.log(fps);
 			takePhotoInterval = setInterval(takepicture, fps);
+			maxYaw = 0;
+			maxPitch = 0;
+			minYaw = 0;
+			minPitch = 0;
 		});
 		var stopRecordingFn = () => {
 			dataLoading.classList.toggle("d-none");
@@ -329,6 +352,13 @@ const Jeeliz = () => {
 					}
 				}
 			);
+			yawMaxMin.innerHTML =
+				"max Yaw= " + maxYaw.toFixed(2) + " and min Yaw= " + minYaw.toFixed(2);
+			pitchMaxMin.innerHTML =
+				"max Pitch= " +
+				maxPitch.toFixed(2) +
+				" and min Pitch= " +
+				minPitch.toFixed(2);
 		};
 		stopBtnTackingPhoto.addEventListener("click", () => {
 			stopRecordingFn();
