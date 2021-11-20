@@ -16,7 +16,7 @@
 		<script src="static/lib/three/matrix/THREEMatrix.js"></script>
 	</head>
 	<body class="container">
-		<h1 class="my-3 fs-1 text-center">
+		<h1 class="my-2 fs-2 text-center">
 			Head position detection By JeelizFaceFilter
 		</h1>
 
@@ -24,24 +24,35 @@
 			<a href="index.html" class="fs-2">back</a>
 		</div>
 		<div>
-			<div class="mb-4 d-flex justify-content-center">
-				<button class="btn btn-primary mx-2" data-start>start</button>
-				<button class="btn btn-danger mx-2 me-5" data-stop>stop</button>
-				<button class="btn btn-primary mx-2" data-start-tacking-photo>
-					start tacking photo
-				</button>
-				<button class="btn btn-danger mx-2" data-stop-tacking-photo>
-					stop tacking photo
-				</button>
-				<select data-fps>
-					<option value="333">3 FPS</option>
-					<option value="250">4 FPS</option>
-				</select>
-				<div class="mx-4">
-					<label>set interval time</label>
-					<input type="number" data-time-input value="25" />
+			<div class="mb-4 d-flex justify-content-center flex-wrap">
+				<div class="mb-1 d-flex justify-content-center flex-wrap">
+					<button class="btn btn-primary mx-2" data-start>start</button>
+					<button class="btn btn-danger mx-2 me-5" data-stop>stop</button>
 				</div>
-				<div>timer: <span data-time></span></div>
+				<div class="mb-1 d-flex justify-content-center flex-wrap">
+					<button class="btn btn-primary mx-2" data-start-tacking-photo>
+						start tacking photo
+					</button>
+					<button class="btn btn-danger mx-2" data-stop-tacking-photo>
+						stop tacking photo
+					</button>
+				</div>
+				<div class="mb-1 d-flex justify-content-center flex-wrap">
+					<select data-fps>
+						<option value="333">3 FPS</option>
+						<option value="250">4 FPS</option>
+					</select>
+					<div class="mx-4">
+						<label>time</label>
+						<input
+							type="number"
+							data-time-input
+							value="25"
+							style="width: 50px"
+						/>
+					</div>
+					<div>timer: <span data-time></span></div>
+				</div>
 			</div>
 
 			<div class="loading d-none" data-loading></div>
