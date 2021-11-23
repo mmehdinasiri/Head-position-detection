@@ -40,6 +40,7 @@ const Jeeliz = () => {
 	const pitchPinter = document.querySelector("[data-pitch-pointer]");
 	const startBtn = document.querySelector("[data-start]");
 	const stopBtn = document.querySelector("[data-stop]");
+	const action = document.querySelector("[data-action]");
 	const startBtnTackingPhoto = document.querySelector(
 		"[data-start-tacking-photo]"
 	);
@@ -64,6 +65,40 @@ const Jeeliz = () => {
 	var streaming = false;
 	var streamObj = null;
 
+	var actionDic = {
+		0: "up",
+		1: "down",
+		2: "right",
+		3: "left",
+	};
+	var randomNumberList = [];
+	var randomAction = "";
+	function createActions() {
+		console.log("createActions");
+		var newNum = Math.random() * 3;
+		if (
+			randomNumberList.includes(newNum.toFixed()) &&
+			randomNumberList.length < 4
+		) {
+			createActions();
+		} else {
+			randomNumberList.push(newNum.toFixed());
+		}
+		if (randomNumberList.length < 4) {
+			createActions();
+		} else {
+			randomAction =
+				"action: " +
+				actionDic[randomNumberList[0]] +
+				" => " +
+				actionDic[randomNumberList[1]] +
+				" => " +
+				actionDic[randomNumberList[2]] +
+				" => " +
+				actionDic[randomNumberList[3]];
+			action.innerHTML = randomAction;
+		}
+	}
 	function clearphoto() {
 		var context = canvas.getContext("2d");
 		context.fillStyle = "#AAA";
@@ -94,13 +129,14 @@ const Jeeliz = () => {
 	async function webCam() {
 		// var correctHeight = window.innerHeight - 190;
 		var correctHeight = screen.height - 190;
+		console.log("screen", screen);
 		//fix video size base on device screen size and device type
 		if (screen.width <= 720) {
-			videoContainer.setAttribute(
-				"style",
-				"height:" + correctHeight + "px !important"
-			);
-			videoWidth = correctHeight;
+			console.log("--------------");
+			videoContainer.style.height = screen.height / 1.75 + "px";
+			videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
+			videoWidth = (screen.height / 1.75) * 0.75;
+			videoHeight = screen.height / 1.75;
 		} else {
 			videoContainer.style.height = screen.height / 1.75 + "px";
 			videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
@@ -197,7 +233,6 @@ const Jeeliz = () => {
 			// FACE DETECTED
 			ISDETECTED = true;
 		}
-		console.log("----------------------");
 		if (ISDETECTED) {
 			// move the cube in order to fit the head:
 			const tanFOV = Math.tan((CAMERA.aspect * CAMERA.fov * Math.PI) / 360); //tan(FOV/2), in radians
@@ -305,6 +340,7 @@ const Jeeliz = () => {
 		});
 
 		startBtnTackingPhoto.addEventListener("click", () => {
+			createActions();
 			var time = 0;
 			timer = setInterval(function () {
 				if (time == timeInterval) {
@@ -326,6 +362,7 @@ const Jeeliz = () => {
 			dataLoading.classList.toggle("d-none");
 			clearInterval(timer);
 			clearInterval(takePhotoInterval);
+			randomNumberList = [];
 			// gifshot.stopVideoStreaming();
 			// photoList.forEach((item) => {
 			// 	var img = document.createElement("img");
