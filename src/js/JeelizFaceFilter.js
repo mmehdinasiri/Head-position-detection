@@ -29,6 +29,11 @@ const Jeeliz = () => {
 	var minYaw = 0;
 	var maxPitch = 0;
 	var minPitch = 0;
+	var currentValues = {
+		yaw: 0,
+		pitch: 0,
+	};
+	var valueTable = "";
 
 	const video = document.getElementById("video");
 	const canvas = document.getElementById("canvas");
@@ -56,6 +61,7 @@ const Jeeliz = () => {
 	var fps = dataFps.value;
 	const yawMaxMin = document.querySelector("[yaw-max-min]");
 	const pitchMaxMin = document.querySelector("[pitch-max-min]");
+	const tableTbody = document.querySelector("[data-table-tbody]");
 
 	const timeIntervalElm = document.querySelector("[data-time-input]");
 	var timeInterval = timeIntervalElm.value;
@@ -64,6 +70,15 @@ const Jeeliz = () => {
 	var takePhotoInterval = null;
 	var streaming = false;
 	var streamObj = null;
+	var result = null;
+
+	var createFormData = (propList) => {
+		var formDate = new FormData();
+		Object.keys(propList).forEach((key) => {
+			formDate.append(key, propList[key]);
+		});
+		return formDate;
+	};
 
 	var actionDic = {
 		0: "up",
@@ -73,8 +88,10 @@ const Jeeliz = () => {
 	};
 	var randomNumberList = [];
 	var randomAction = "";
+	var step = 0;
+	var currentAction = "";
+	var isStarted = false;
 	function createActions() {
-		console.log("createActions");
 		var newNum = Math.random() * 3;
 		if (
 			randomNumberList.includes(newNum.toFixed()) &&
@@ -88,7 +105,6 @@ const Jeeliz = () => {
 			createActions();
 		} else {
 			randomAction =
-				"action: " +
 				actionDic[randomNumberList[0]] +
 				" => " +
 				actionDic[randomNumberList[1]] +
@@ -96,9 +112,111 @@ const Jeeliz = () => {
 				actionDic[randomNumberList[2]] +
 				" => " +
 				actionDic[randomNumberList[3]];
-			action.innerHTML = randomAction;
+			action.innerHTML = actionDic[randomNumberList[0]];
+			currentAction = actionDic[randomNumberList[0]];
+			console.log(actionDic);
 		}
 	}
+
+	function urltoFile(url, filename, mimeType) {
+		return fetch(url)
+			.then(function (res) {
+				return res.arrayBuffer();
+			})
+			.then(function (buf) {
+				return new File([buf], filename, { type: mimeType });
+			});
+	}
+
+	function checkAction(yaw, pitch) {
+		if (step === 4) {
+			action.innerHTML = "done";
+		}
+		if (currentAction === "right") {
+			action.innerHTML = currentAction + " " + yaw + "<" + "-0.5";
+			if (yaw < -0.5) {
+				step += 1;
+				currentAction = actionDic[randomNumberList[step]];
+				action.innerHTML = currentAction + " " + yaw + "<" + "-0.5" + "===> in";
+			}
+		}
+		if (currentAction === "left") {
+			action.innerHTML = currentAction + " " + yaw + ">" + "0.5";
+			if (yaw > 0.5) {
+				step += 1;
+				currentAction = actionDic[randomNumberList[step]];
+				action.innerHTML = currentAction + " " + yaw + ">" + "0.5" + "===> in";
+			}
+		}
+		if (currentAction === "up") {
+			action.innerHTML = currentAction + " " + pitch + ">" + "0.2";
+			if (pitch > 0.2) {
+				step += 1;
+				currentAction = actionDic[randomNumberList[step]];
+				action.innerHTML =
+					currentAction + " " + pitch + ">" + "0.2" + "===> in";
+			}
+		}
+		if (currentAction === "down") {
+			action.innerHTML = currentAction + " " + pitch + "<" + "-.6";
+			if (pitch < -0.6) {
+				step += 1;
+				currentAction = actionDic[randomNumberList[step]];
+				action.innerHTML =
+					currentAction + " " + pitch + "<" + "-.6" + "===> in";
+			}
+		}
+		// action.innerHTML = currentAction;
+	}
+	async function sendImage() {
+		const fixedFrames = {};
+		photoList.forEach((frame, idx) => {
+			fixedFrames[idx] = frame.split(",")[1];
+		});
+
+		var file = await urltoFile(photoList[0], "imagefile.jpeg", "image/jpeg");
+
+		var formData = new FormData();
+		formData.append("image", file, "/path/to/file");
+		formData.append("fps", fps === "333" ? "3" : "4");
+		formData.append(
+			"pose_action",
+			randomAction
+				.split(" => ")
+				.map((act) => act.split("")[0])
+				.join("")
+		);
+		formData.append("id", new Date().getTime());
+		formData.append("frames", JSON.stringify(fixedFrames));
+
+		var requestOptions = {
+			method: "POST",
+			body: formData,
+			redirect: "follow",
+		};
+		action.innerHTML = "please wait to get the result";
+		fetch("http://192.168.106.243:9200/ekyc/v2.0", requestOptions)
+			.then((response) => response.text())
+			.then((res) => {
+				console.log("done");
+				dataLoading.classList.toggle("d-none");
+				result = JSON.parse(res);
+				console.log(result);
+				action.innerHTML =
+					"liveness: " +
+					result.liveness +
+					" -- " +
+					" match point: " +
+					result.actions_are_matched;
+			})
+			.catch((error) => {
+				console.log("faild");
+				dataLoading.classList.toggle("d-none");
+				action.innerHTML = "error occurs";
+				console.log("error", error);
+			});
+	}
+
 	function clearphoto() {
 		var context = canvas.getContext("2d");
 		context.fillStyle = "#AAA";
@@ -121,6 +239,15 @@ const Jeeliz = () => {
 
 			photoList.push(data);
 			// console.log(photoList);
+			var tempRow =
+				"<tr><td>" +
+				currentValues.yaw +
+				"</td><td>" +
+				currentValues.pitch +
+				"</td><td>" +
+				currentAction +
+				"</td></tr>";
+			valueTable += tempRow;
 		} else {
 			clearphoto();
 		}
@@ -147,8 +274,8 @@ const Jeeliz = () => {
 		const constraints = {
 			audio: true,
 			video: {
-				width: videoWidth,
-				height: videoHeight,
+				// width: videoWidth,
+				// height: videoHeight,
 				facingMode: "user",
 				frameRate: { max: 30 },
 			},
@@ -249,9 +376,15 @@ const Jeeliz = () => {
 			const y = (yv * D * tanFOV) / CAMERA.aspect;
 			// pitch.innerHTML = x.toFixed(2);
 			// roll.innerHTML = z.toFixed(2);
-
+			currentValues = {
+				yaw: x.toFixed(2),
+				pitch: y.toFixed(2),
+			};
 			let yawNumber = Number(-x.toFixed(2) * 72 + 50).toFixed(0);
-			let pitchNumber = Number(y.toFixed(2) * -100 + 40).toFixed(0);
+			let pitchNumber = Number(y.toFixed(2) * -100 + 20).toFixed(0);
+			if (isStarted || step < 4) {
+				checkAction(x.toFixed(2), y.toFixed(2));
+			}
 			yaw.innerHTML =
 				"yaw: " +
 				x.toFixed(2) +
@@ -340,6 +473,8 @@ const Jeeliz = () => {
 		});
 
 		startBtnTackingPhoto.addEventListener("click", () => {
+			result = null;
+			isStarted = true;
 			createActions();
 			var time = 0;
 			timer = setInterval(function () {
@@ -362,6 +497,13 @@ const Jeeliz = () => {
 			dataLoading.classList.toggle("d-none");
 			clearInterval(timer);
 			clearInterval(takePhotoInterval);
+			tableTbody.innerHTML = valueTable;
+
+			if (step === 4) {
+			}
+			sendImage();
+			step = 0;
+			isStarted = false;
 			randomNumberList = [];
 			// gifshot.stopVideoStreaming();
 			// photoList.forEach((item) => {
@@ -380,7 +522,9 @@ const Jeeliz = () => {
 				function (obj) {
 					if (!obj.error) {
 						console.log("start");
-						dataLoading.classList.toggle("d-none");
+						if (result) {
+							dataLoading.classList.toggle("d-none");
+						}
 						var image = obj.image,
 							animatedImage = document.createElement("img");
 						animatedImage.src = image;
@@ -404,6 +548,7 @@ const Jeeliz = () => {
 			stopStreamedVideo(video);
 		});
 	}
+
 	init();
 };
 

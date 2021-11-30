@@ -12,6 +12,11 @@
 			content="webpack, webpack-configuration, template, boilerplate, setup, html, css, sass, javascript"
 		/>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- <meta
+			http-equiv="Content-Security-Policy"
+			content="upgrade-insecure-requests"
+		/> -->
+
 		<meta name="author" content="Plamen Nikolov, WeAreAthlon" />
 		<script src="static/lib/three/matrix/THREEMatrix.js"></script>
 	</head>
@@ -54,7 +59,7 @@
 					<div>timer: <span data-time></span></div>
 				</div>
 			</div>
-			<div data-action class="text-center">action:</div>
+			<div data-action class="text-center">action</div>
 
 			<div class="loading d-none" data-loading></div>
 			<div class="snapshot-video d-none" data-video-container>
@@ -121,6 +126,17 @@
 				<canvas id="canvas-photo" style="margin: 32px auto" hidden></canvas>
 			</div>
 			<div class="d-flex flex-wrap" data-photo-list></div>
+			<table data-table class="table table-dark">
+				<thead>
+					<tr>
+						<th>Yaw</th>
+						<th>Pith</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+
+				<tbody data-table-tbody></tbody>
+			</table>
 		</div>
 	</body>
 </html>
