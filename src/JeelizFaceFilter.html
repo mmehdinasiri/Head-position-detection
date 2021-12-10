@@ -31,18 +31,20 @@
 		<div>
 			<div class="mb-4 d-flex justify-content-center flex-wrap">
 				<div class="mb-1 d-flex justify-content-center flex-wrap">
-					<button class="btn btn-primary mx-2" data-start>start</button>
-					<button class="btn btn-danger mx-2 me-5" data-stop>stop</button>
+					<button class="btn btn-primary mx-2" data-start>Open Camera</button>
+					<button class="btn btn-danger mx-2 me-5" data-stop>
+						Close Camera
+					</button>
 				</div>
 				<div class="mb-1 d-flex justify-content-center flex-wrap">
 					<button class="btn btn-primary mx-2" data-start-tacking-photo>
-						start tacking photo
+						Start Challenge
 					</button>
 					<button class="btn btn-danger mx-2" data-stop-tacking-photo>
-						stop tacking photo
+						Stop Challenge
 					</button>
 				</div>
-				<div class="mb-1 d-flex justify-content-center flex-wrap">
+				<!-- <div class="mb-1 d-flex justify-content-center flex-wrap">
 					<select data-fps>
 						<option value="333">3 FPS</option>
 						<option value="250">4 FPS</option>
@@ -57,63 +59,105 @@
 						/>
 					</div>
 					<div>timer: <span data-time></span></div>
-				</div>
+				</div> -->
 			</div>
-			<div data-action class="text-center">action</div>
+			<div data-action class="text-center mb-5">action</div>
 
 			<div class="loading d-none" data-loading></div>
 			<div class="snapshot-video d-none" data-video-container>
-				<canvas
-					id="canvas"
-					style="margin: 0 auto; position: absolute; width: 100px !important"
-				></canvas>
-				<video
-					style="
-						margin: 0 auto;
-						position: absolute;
-						display: none;
-						transform: scale(-1, 1);
-					"
-					id="video2"
-					autoplay
-					muted
-					playsinline
-				></video>
-				<video
-					id="video"
-					autoplay
-					muted
-					playsinline
-					style="
-						margin: 0 auto;
-						transform: scale(-1, 1);
-						position: absolute;
+				<div class="video-wrapper" data-video-wrapper>
+					<canvas
+						id="canvas"
+						style="margin: 0 auto; position: absolute; width: 100px !important"
+					></canvas>
+					<video
+						style="
+							margin: 0 auto;
+							position: absolute;
+							display: none;
+							transform: scale(-1, 1);
+						"
+						id="video2"
+						autoplay
+						muted
+						playsinline
+					></video>
+					<video
+						id="video"
+						autoplay
+						muted
+						playsinline
+						style="
+							margin: 0 auto;
+							transform: scale(-1, 1);
+							/* position: absolute;
 						top: 0;
 						left: 0;
 						right: 0;
-						bottom: 0;
-					"
-				></video>
-				<!-- <img
+						bottom: 0; */
+						"
+					></video>
+					<!-- <img
 					class="video-record-frame"
 					src="images/content//video-record-fram.svg"
 				/> -->
-				<div
-					class="video-record-frame"
-					style="background-image: url(images/content//video-record-fram.svg)"
-				></div>
-				<div class="yaw">
-					<div data-yaw-bar class="yaw-bar">
-						<div data-yaw-pointer class="yaw-pointer"></div>
+					<div
+						class="action-validation action-validation--up"
+						data-up-validation
+					>
+						<span class="action-validation--checkmar"></span>
 					</div>
-				</div>
-				<div class="pitch">
-					<div data-pitch-bar class="pitch-bar">
-						<div data-pitch-pointer class="pitch-pointer"></div>
+					<div
+						class="action-validation action-validation--down"
+						data-down-validation
+					>
+						<span class="action-validation--checkmar"></span>
+					</div>
+					<div
+						class="action-validation action-validation--left"
+						data-left-validation
+					>
+						<span class="action-validation--checkmar"></span>
+					</div>
+					<div
+						class="action-validation action-validation--right"
+						data-right-validation
+					>
+						<span class="action-validation--checkmar"></span>
+					</div>
+					<div class="arrow arrow-down d-none" data-arrow-down>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="arrow arrow-up d-none" data-arrow-up>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="arrow arrow-left d-none" data-arrow-left>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="arrow arrow-right d-none" data-arrow-right>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="yaw">
+						<div data-yaw-bar class="yaw-bar">
+							<div data-yaw-pointer class="yaw-pointer"></div>
+						</div>
+					</div>
+					<div class="pitch">
+						<div data-pitch-bar class="pitch-bar">
+							<div data-pitch-pointer class="pitch-pointer"></div>
+						</div>
 					</div>
 				</div>
 			</div>
-			<div class="text-center">
+			<div class="text-center mt-5">
 				<div data-yaw></div>
 				<div data-pitch></div>
 				<div data-roll></div>

@@ -34,6 +34,7 @@ const Jeeliz = () => {
 		pitch: 0,
 	};
 	var valueTable = "";
+	var valueTableData = [];
 
 	const video = document.getElementById("video");
 	const canvas = document.getElementById("canvas");
@@ -58,13 +59,18 @@ const Jeeliz = () => {
 	const dataLoading = document.querySelector("[data-loading]");
 	const dataFps = document.querySelector("[data-fps]");
 	const timeElm = document.querySelector("[data-time]");
-	var fps = dataFps.value;
+	// var fps = dataFps.value;
 	const yawMaxMin = document.querySelector("[yaw-max-min]");
 	const pitchMaxMin = document.querySelector("[pitch-max-min]");
 	const tableTbody = document.querySelector("[data-table-tbody]");
+	const videoWrapper = document.querySelector("[data-video-wrapper]");
+	const arrowUp = document.querySelector("[data-arrow-up]");
+	const arrowDown = document.querySelector("[data-arrow-down]");
+	const arrowLeft = document.querySelector("[data-arrow-left]");
+	const arrowRight = document.querySelector("[data-arrow-right]");
 
-	const timeIntervalElm = document.querySelector("[data-time-input]");
-	var timeInterval = timeIntervalElm.value;
+	// const timeIntervalElm = document.querySelector("[data-time-input]");
+	// var timeInterval = timeIntervalElm.value;
 
 	var photoList = [];
 	var takePhotoInterval = null;
@@ -91,6 +97,7 @@ const Jeeliz = () => {
 	var step = 0;
 	var currentAction = "";
 	var isStarted = false;
+
 	function createActions() {
 		var newNum = Math.random() * 3;
 		if (
@@ -117,7 +124,6 @@ const Jeeliz = () => {
 			console.log(actionDic);
 		}
 	}
-
 	function urltoFile(url, filename, mimeType) {
 		return fetch(url)
 			.then(function (res) {
@@ -127,43 +133,50 @@ const Jeeliz = () => {
 				return new File([buf], filename, { type: mimeType });
 			});
 	}
-
 	function checkAction(yaw, pitch) {
 		if (step === 4) {
 			action.innerHTML = "done";
 		}
 		if (currentAction === "right") {
+			arrowRight.classList.remove("d-none");
 			action.innerHTML = currentAction + " " + yaw + "<" + "-0.5";
-			if (yaw < -0.5) {
+			if (yaw < -0.4) {
 				step += 1;
 				currentAction = actionDic[randomNumberList[step]];
 				action.innerHTML = currentAction + " " + yaw + "<" + "-0.5" + "===> in";
+				videoWrapper.classList = videoWrapper.classList + " right-action-done";
 			}
 		}
 		if (currentAction === "left") {
 			action.innerHTML = currentAction + " " + yaw + ">" + "0.5";
-			if (yaw > 0.5) {
+			arrowLeft.classList.remove("d-none");
+			if (yaw > 0.4) {
 				step += 1;
 				currentAction = actionDic[randomNumberList[step]];
 				action.innerHTML = currentAction + " " + yaw + ">" + "0.5" + "===> in";
+				videoWrapper.classList = videoWrapper.classList + " left-action-done";
 			}
 		}
 		if (currentAction === "up") {
 			action.innerHTML = currentAction + " " + pitch + ">" + "0.2";
-			if (pitch > 0.2) {
+			arrowUp.classList.remove("d-none");
+			if (pitch > 0.1) {
 				step += 1;
 				currentAction = actionDic[randomNumberList[step]];
 				action.innerHTML =
 					currentAction + " " + pitch + ">" + "0.2" + "===> in";
+				videoWrapper.classList = videoWrapper.classList + " up-action-done";
 			}
 		}
 		if (currentAction === "down") {
 			action.innerHTML = currentAction + " " + pitch + "<" + "-.6";
-			if (pitch < -0.6) {
+			arrowDown.classList.remove("d-none");
+			if (pitch < -0.45) {
 				step += 1;
 				currentAction = actionDic[randomNumberList[step]];
 				action.innerHTML =
 					currentAction + " " + pitch + "<" + "-.6" + "===> in";
+				videoWrapper.classList = videoWrapper.classList + " down-action-done";
 			}
 		}
 		// action.innerHTML = currentAction;
@@ -178,7 +191,8 @@ const Jeeliz = () => {
 
 		var formData = new FormData();
 		formData.append("image", file, "/path/to/file");
-		formData.append("fps", fps === "333" ? "3" : "4");
+		// formData.append("fps", fps === "333" ? "3" : "4");
+		formData.append("fps", "3");
 		formData.append(
 			"pose_action",
 			randomAction
@@ -195,7 +209,7 @@ const Jeeliz = () => {
 			redirect: "follow",
 		};
 		action.innerHTML = "please wait to get the result";
-		fetch("http://192.168.106.243:9200/ekyc/v2.0", requestOptions)
+		fetch("https://reg-api-test.emofid.com/api/ekyc", requestOptions)
 			.then((response) => response.text())
 			.then((res) => {
 				console.log("done");
@@ -216,7 +230,6 @@ const Jeeliz = () => {
 				console.log("error", error);
 			});
 	}
-
 	function clearphoto() {
 		var context = canvas.getContext("2d");
 		context.fillStyle = "#AAA";
@@ -225,7 +238,6 @@ const Jeeliz = () => {
 		var data = canvas.toDataURL("image/png");
 		photo.setAttribute("src", data);
 	}
-
 	function takepicture() {
 		var context = canvasPhoto.getContext("2d");
 		console.log("start taking photo");
@@ -239,6 +251,11 @@ const Jeeliz = () => {
 
 			photoList.push(data);
 			// console.log(photoList);
+			valueTableData.push({
+				yaw: currentValues.yaw,
+				pitch: currentValues.pitch,
+				action: currentAction,
+			});
 			var tempRow =
 				"<tr><td>" +
 				currentValues.yaw +
@@ -252,7 +269,6 @@ const Jeeliz = () => {
 			clearphoto();
 		}
 	}
-
 	async function webCam() {
 		// var correctHeight = window.innerHeight - 190;
 		var correctHeight = screen.height - 190;
@@ -260,15 +276,22 @@ const Jeeliz = () => {
 		//fix video size base on device screen size and device type
 		if (screen.width <= 720) {
 			console.log("--------------");
-			videoContainer.style.height = screen.height / 1.75 + "px";
-			videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
+			// videoContainer.style.height = screen.height / 1.75 + "px";
+			// videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
+
+			videoContainer.style.height = screen.width / 1.25 + "px";
+			videoContainer.style.width = screen.width / 1.25 + "px";
+
 			videoWidth = (screen.height / 1.75) * 0.75;
 			videoHeight = screen.height / 1.75;
 		} else {
-			videoContainer.style.height = screen.height / 1.75 + "px";
-			videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
+			// videoContainer.style.height = screen.height / 1.75 + "px";
+			// videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
 			videoWidth = (screen.height / 1.75) * 0.75;
 			videoHeight = screen.height / 1.75;
+
+			videoContainer.style.height = screen.height / 2 + "px";
+			videoContainer.style.width = screen.height / 2 + "px";
 		}
 
 		const constraints = {
@@ -304,11 +327,8 @@ const Jeeliz = () => {
 				if (!streaming) {
 					height = videoHeight;
 					width = videoWidth;
-					console.log(height);
-					console.log(videoHeight);
 
 					if (isNaN(height)) {
-						console.log("innnnn");
 						height = width / (4 / 3);
 					}
 
@@ -322,7 +342,6 @@ const Jeeliz = () => {
 			false
 		);
 	}
-
 	// build the 3D. called once when Jeeliz Face Filter is OK:
 	function init_scene(spec) {
 		// init projection parameters:
@@ -343,7 +362,6 @@ const Jeeliz = () => {
 			fov: SETTINGS.cameraFOV,
 		};
 	} //end init_scene()
-
 	function callbackTrack(detectState) {
 		if (
 			ISDETECTED &&
@@ -461,33 +479,34 @@ const Jeeliz = () => {
 
 		// videoElem.srcObject = null;
 	}
+
 	function init() {
 		startBtn.addEventListener("click", () => {
 			main();
 		});
-		dataFps.addEventListener("change", function () {
-			fps = this.value;
-		});
-		timeIntervalElm.addEventListener("input", function () {
-			timeInterval = this.value;
-		});
+		// dataFps.addEventListener("change", function () {
+		// 	fps = this.value;
+		// });
+		// timeIntervalElm.addEventListener("input", function () {
+		// 	timeInterval = this.value;
+		// });
 
 		startBtnTackingPhoto.addEventListener("click", () => {
 			result = null;
 			isStarted = true;
 			createActions();
 			var time = 0;
-			timer = setInterval(function () {
-				if (time == timeInterval) {
-					stopRecordingFn();
-					clearInterval(timer);
-				}
+			// timer = setInterval(function () {
+			// 	if (time == timeInterval) {
+			// 		stopRecordingFn();
+			// 		clearInterval(timer);
+			// 	}
 
-				timeElm.innerHTML = time;
-				time = time + 1;
-			}, 1000);
-			console.log(fps);
-			takePhotoInterval = setInterval(takepicture, fps);
+			// 	timeElm.innerHTML = time;
+			// 	time = time + 1;
+			// }, 1000);
+			// console.log(fps);
+			takePhotoInterval = setInterval(takepicture, 333);
 			maxYaw = 0;
 			maxPitch = 0;
 			minYaw = 0;
@@ -500,8 +519,17 @@ const Jeeliz = () => {
 			tableTbody.innerHTML = valueTable;
 
 			if (step === 4) {
+				sendImage();
 			}
-			sendImage();
+			var collectedData = {
+				values: {
+					minPitch: minPitch.toFixed(2),
+					maxPitch: maxPitch.toFixed(2),
+					minYaw: minYaw.toFixed(2),
+					maxYaw: maxYaw.toFixed(2),
+				},
+				table: [...valueTableData],
+			};
 			step = 0;
 			isStarted = false;
 			randomNumberList = [];
@@ -516,8 +544,8 @@ const Jeeliz = () => {
 			gifshot.createGIF(
 				{
 					images: photoList,
-					gifWidth: videoWidth,
-					gifHeight: videoHeight,
+					gifWidth: screen.height / 2,
+					gifHeight: screen.height / 2,
 				},
 				function (obj) {
 					if (!obj.error) {
