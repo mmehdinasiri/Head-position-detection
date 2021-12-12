@@ -360,3 +360,22 @@
 		display: block;
 	}
 }
+.intervalTimer {
+	display: none;
+	position: absolute;
+	top: 50%;
+	left: 50%;
+	transform: translate(-50%, -50%);
+	width: 80px;
+	height: 80px;
+	font-size: 48px;
+	color: black;
+	text-align: center;
+	background: white;
+	padding: 8px;
+	border-radius: 100%;
+}
+.is-disabled {
+	opacity: 0.5;
+	pointer-events: none;
+}

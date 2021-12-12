@@ -12,84 +12,176 @@
 			content="webpack, webpack-configuration, template, boilerplate, setup, html, css, sass, javascript"
 		/>
 		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<!-- <meta
+			http-equiv="Content-Security-Policy"
+			content="upgrade-insecure-requests"
+		/> -->
+
 		<meta name="author" content="Plamen Nikolov, WeAreAthlon" />
+		<script src="static/lib/three/matrix/THREEMatrix.js"></script>
 	</head>
 	<body class="container">
-		<h1 class="my-5 fs-1 text-center py-5">Head position detection</h1>
+		<!-- <h1 class="my-2 fs-2 text-center">
+			Head position detection By JeelizFaceFilter
+		</h1> -->
 
-		<div class="row row-cols-1  row-cols-lg-3 mt-5">
-      <div class="col mb-5">
-        <div class="d-flex flex-column text-center">
-          <a href="human.html" class="fs-2 mb-4">Human</a>
-          <a href="https://github.com/vladmandic/human/">github link</a>
-          <span>star: 352 </span>
-          <span>issue: 116(closed)</span>
-          <div class="my-2">
-            <p>prose:</p>
-            <ul>
-              <li>3d (468-Point)</li>
-              <li>High accuracy</li>
-            </ul>
-          </div>
-          <div>
-            <p>cons:</p>
-            <ul>
-              <li>size (almost 6mg)</li>
-              <li>count of stars in github</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="col mb-5">
-        <div class=" d-flex flex-column text-center">
-          <h1  class="fs-2 link">FaceApi</h2>
-          <div class="flex mb-4">
-            <a href="faceApiSSd.html" class="fs-2 mb-4">SSd</a>/
-            <a href="faceApiTiny.html" class="fs-2 mb-4">Tiny</a>
-          </div>
-          <a href="https://github.com/justadudewhohacks/face-api.js/"
-            >github link</a
-          >
-          <span>star: 12.9k </span>
-          <span>issue: 357(open)-364(closed) </span>
-          <div class="my-2">
-            <p>prose:</p>
-            <ul>
-              <li>community</li>
-            </ul>
-          </div>
-          <div>
-            <p>cons:</p>
-            <ul>
-              <li>size (almost 4mg)</li>
-              <li>2d (68-Point)</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-      <div class="col mb-5">
-        <div class=" d-flex flex-column text-center">
-          <a href="JeelizFaceFilter.html" class="fs-2 mb-4">JeelizFaceFilter</a>
-          <a href="https://github.com/jeeliz/jeelizFaceFilter">github link</a>
-          <span>star: 2k</span>
-          <span>issue:1(open), 201(closed)</span>
-          <div class="my-2">
-            <p>prose:</p>
-            <ul>
-              <li>lightweight</li>
-              <li>3D</li>
-              <li>good accuracy</li>
-            </ul>
-          </div>
-          <div>
-            <p>cons:</p>
-            <ul>
-              <li>sometimes loses head</li>
-            </ul>
-          </div>
-        </div>
-      </div>
+		<div>
+			<div data-action class="text-center m-5" style="font-size: 20px"></div>
+
+			<div class="loading d-none" data-loading></div>
+			<div class="snapshot-video d-none" data-video-container>
+				<div class="video-wrapper" data-video-wrapper>
+					<canvas
+						id="canvas"
+						style="margin: 0 auto; position: absolute; width: 100px !important"
+					></canvas>
+					<video
+						style="
+							margin: 0 auto;
+							position: absolute;
+							display: none;
+							transform: scale(-1, 1);
+						"
+						id="video2"
+						autoplay
+						muted
+						playsinline
+					></video>
+					<video
+						id="video"
+						autoplay
+						muted
+						playsinline
+						style="
+							margin: 0 auto;
+							transform: scale(-1, 1);
+							/* position: absolute;
+						top: 0;
+						left: 0;
+						right: 0;
+						bottom: 0; */
+						"
+					></video>
+					<!-- <img
+					class="video-record-frame"
+					src="images/content//video-record-fram.svg"
+				/> -->
+					<spna class="intervalTimer" data-interval-timer></spna>
+					<div
+						class="action-validation action-validation--up"
+						data-up-validation
+					>
+						<span class="action-validation--checkmar"></span>
+					</div>
+					<div
+						class="action-validation action-validation--down"
+						data-down-validation
+					>
+						<span class="action-validation--checkmar"></span>
+					</div>
+					<div
+						class="action-validation action-validation--left"
+						data-left-validation
+					>
+						<span class="action-validation--checkmar"></span>
+					</div>
+					<div
+						class="action-validation action-validation--right"
+						data-right-validation
+					>
+						<span class="action-validation--checkmar"></span>
+					</div>
+					<div class="arrow arrow-down d-none" data-arrow-down>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="arrow arrow-up d-none" data-arrow-up>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="arrow arrow-left d-none" data-arrow-left>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="arrow arrow-right d-none" data-arrow-right>
+						<span></span>
+						<span></span>
+						<span></span>
+					</div>
+					<div class="yaw" data-yaw-gauge>
+						<div data-yaw-bar class="yaw-bar">
+							<div data-yaw-pointer class="yaw-pointer"></div>
+						</div>
+					</div>
+					<div class="pitch" data-pitch-gauge>
+						<div data-pitch-bar class="pitch-bar">
+							<div data-pitch-pointer class="pitch-pointer"></div>
+						</div>
+					</div>
+				</div>
 			</div>
+			<div class="m-5 pt-3 d-flex justify-content-center flex-wrap">
+				<div class="mb-1 d-flex justify-content-center flex-wrap">
+					<!-- <button class="btn btn-primary mx-2" data-start>Open Camera</button>
+					<button class="btn btn-danger mx-2 me-5" data-stop>
+						Close Camera
+					</button> -->
+				</div>
+				<div class="mb-1 d-flex justify-content-center flex-wrap">
+					<button class="btn btn-primary mx-2" data-start-tacking-photo>
+						شروع احراز هویت
+					</button>
+					<button
+						class="btn btn-danger mx-2 is-disabled d-none"
+						data-stop-tacking-photo
+					>
+						توقف و ارسال ویدیو
+					</button>
+				</div>
+				<!-- <div class="mb-1 d-flex justify-content-center flex-wrap">
+					<select data-fps>
+						<option value="333">3 FPS</option>
+						<option value="250">4 FPS</option>
+					</select>
+					<div class="mx-4">
+						<label>time</label>
+						<input
+							type="number"
+							data-time-input
+							value="25"
+							style="width: 50px"
+						/>
+					</div>
+					<div>timer: <span data-time></span></div>
+				</div> -->
+			</div>
+			<div class="text-center mt-5">
+				<div data-yaw></div>
+				<div data-pitch></div>
+				<div data-roll></div>
+				<div data-facing></div>
+				<div data-head></div>
+				<div yaw-max-min></div>
+				<div pitch-max-min></div>
+			</div>
+			<div>
+				<canvas id="canvas-photo" style="margin: 32px auto" hidden></canvas>
+			</div>
+			<div class="d-flex flex-wrap" data-photo-list></div>
+			<!-- <table data-table class="table table-dark">
+				<thead>
+					<tr>
+						<th>Yaw</th>
+						<th>Pith</th>
+						<th>Action</th>
+					</tr>
+				</thead>
+
+				<tbody data-table-tbody></tbody>
+			</table> -->
 		</div>
 	</body>
 </html>

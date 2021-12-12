@@ -68,6 +68,9 @@ const Jeeliz = () => {
 	const arrowDown = document.querySelector("[data-arrow-down]");
 	const arrowLeft = document.querySelector("[data-arrow-left]");
 	const arrowRight = document.querySelector("[data-arrow-right]");
+	const intervalTimer = document.querySelector("[data-interval-timer]");
+	const pitchGauge = document.querySelector("[data-pitch-gauge]");
+	const yawGauge = document.querySelector("[data-yaw-gauge]");
 
 	// const timeIntervalElm = document.querySelector("[data-time-input]");
 	// var timeInterval = timeIntervalElm.value;
@@ -135,47 +138,59 @@ const Jeeliz = () => {
 	}
 	function checkAction(yaw, pitch) {
 		if (step === 4) {
-			action.innerHTML = "done";
+			action.innerHTML = "اتمام عملیات لطفا دکمه قرمز رنگ را فشار دهید.";
+			stopBtnTackingPhoto.classList.remove("is-disabled");
+			stopBtnTackingPhoto.classList.remove("d-none");
 		}
 		if (currentAction === "right") {
 			arrowRight.classList.remove("d-none");
-			action.innerHTML = currentAction + " " + yaw + "<" + "-0.5";
+			action.innerHTML = "لطفا سر خود را به آرامی به راست بچرخانید";
 			if (yaw < -0.4) {
 				step += 1;
-				currentAction = actionDic[randomNumberList[step]];
-				action.innerHTML = currentAction + " " + yaw + "<" + "-0.5" + "===> in";
+				currentAction = "";
+				setTimeout(() => {
+					currentAction = actionDic[randomNumberList[step]];
+				}, 1500);
+				action.innerHTML = "انحام شد";
 				videoWrapper.classList = videoWrapper.classList + " right-action-done";
 			}
 		}
 		if (currentAction === "left") {
-			action.innerHTML = currentAction + " " + yaw + ">" + "0.5";
+			action.innerHTML = "لطفا سر خود را به آرامی به چپ بچرخانید";
 			arrowLeft.classList.remove("d-none");
 			if (yaw > 0.4) {
 				step += 1;
-				currentAction = actionDic[randomNumberList[step]];
-				action.innerHTML = currentAction + " " + yaw + ">" + "0.5" + "===> in";
+				currentAction = "";
+				setTimeout(() => {
+					currentAction = actionDic[randomNumberList[step]];
+				}, 1500);
+				action.innerHTML = "انحام شد";
 				videoWrapper.classList = videoWrapper.classList + " left-action-done";
 			}
 		}
 		if (currentAction === "up") {
-			action.innerHTML = currentAction + " " + pitch + ">" + "0.2";
+			action.innerHTML = "لطفا سر خود را به آرامی به بالا ببرید";
 			arrowUp.classList.remove("d-none");
 			if (pitch > 0.1) {
 				step += 1;
-				currentAction = actionDic[randomNumberList[step]];
-				action.innerHTML =
-					currentAction + " " + pitch + ">" + "0.2" + "===> in";
+				currentAction = "";
+				setTimeout(() => {
+					currentAction = actionDic[randomNumberList[step]];
+				}, 1500);
+				action.innerHTML = "انحام شد";
 				videoWrapper.classList = videoWrapper.classList + " up-action-done";
 			}
 		}
 		if (currentAction === "down") {
-			action.innerHTML = currentAction + " " + pitch + "<" + "-.6";
+			action.innerHTML = "لطفا سر خود را به آرامی به پایین ببرید";
 			arrowDown.classList.remove("d-none");
 			if (pitch < -0.45) {
 				step += 1;
-				currentAction = actionDic[randomNumberList[step]];
-				action.innerHTML =
-					currentAction + " " + pitch + "<" + "-.6" + "===> in";
+				currentAction = "";
+				setTimeout(() => {
+					currentAction = actionDic[randomNumberList[step]];
+				}, 1500);
+				action.innerHTML = "انحام شد";
 				videoWrapper.classList = videoWrapper.classList + " down-action-done";
 			}
 		}
@@ -200,6 +215,16 @@ const Jeeliz = () => {
 				.map((act) => act.split("")[0])
 				.join("")
 		);
+		formData.append(
+			"values",
+			JSON.stringify({
+				minPitch: minPitch.toFixed(2),
+				maxPitch: maxPitch.toFixed(2),
+				minYaw: minYaw.toFixed(2),
+				maxYaw: maxYaw.toFixed(2),
+			})
+		);
+		formData.append("table", JSON.stringify([...valueTableData]));
 		formData.append("id", new Date().getTime());
 		formData.append("frames", JSON.stringify(fixedFrames));
 
@@ -208,7 +233,7 @@ const Jeeliz = () => {
 			body: formData,
 			redirect: "follow",
 		};
-		action.innerHTML = "please wait to get the result";
+		action.innerHTML = "در حال ارسال تصاویر";
 		fetch("https://reg-api-test.emofid.com/api/ekyc", requestOptions)
 			.then((response) => response.text())
 			.then((res) => {
@@ -217,11 +242,14 @@ const Jeeliz = () => {
 				result = JSON.parse(res);
 				console.log(result);
 				action.innerHTML =
-					"liveness: " +
+					"زنده بودن: " +
 					result.liveness +
-					" -- " +
-					" match point: " +
-					result.actions_are_matched;
+					" // " +
+					"درستی حرکات: " +
+					result.actions_are_matched +
+					" // " +
+					"شباهت چهره: " +
+					result.face_similarity;
 			})
 			.catch((error) => {
 				console.log("faild");
@@ -403,16 +431,16 @@ const Jeeliz = () => {
 			if (isStarted || step < 4) {
 				checkAction(x.toFixed(2), y.toFixed(2));
 			}
-			yaw.innerHTML =
-				"yaw: " +
-				x.toFixed(2) +
-				"    converted: " +
-				Number(x.toFixed(2) * 72 + 50).toFixed(0);
-			pitch.innerHTML =
-				"pitch: " +
-				y.toFixed(2) +
-				"    converted: " +
-				Number(y.toFixed(2) * -100 + 50).toFixed(0);
+			// yaw.innerHTML =
+			// 	"yaw: " +
+			// 	x.toFixed(2) +
+			// 	"    converted: " +
+			// 	Number(x.toFixed(2) * 72 + 50).toFixed(0);
+			// pitch.innerHTML =
+			// 	"pitch: " +
+			// 	y.toFixed(2) +
+			// 	"    converted: " +
+			// 	Number(y.toFixed(2) * -100 + 50).toFixed(0);
 
 			yawNumber = yawNumber > 100 ? 100 : yawNumber < 0 ? 0 : yawNumber;
 			pitchNumber = pitchNumber > 100 ? 100 : pitchNumber < 0 ? 0 : pitchNumber;
@@ -435,6 +463,9 @@ const Jeeliz = () => {
 		}
 	}
 	async function main(errCode, bestVideoSettings) {
+		action.innerHTML =
+			"پیش از شروع حرکات با جابجایی سر خود دایره‌های قرمز را در محدود سبز قرار دهید";
+
 		dataLoading.classList.remove("d-none");
 		await webCam(video);
 		if (errCode) {
@@ -481,9 +512,7 @@ const Jeeliz = () => {
 	}
 
 	function init() {
-		startBtn.addEventListener("click", () => {
-			main();
-		});
+		main();
 		// dataFps.addEventListener("change", function () {
 		// 	fps = this.value;
 		// });
@@ -492,44 +521,52 @@ const Jeeliz = () => {
 		// });
 
 		startBtnTackingPhoto.addEventListener("click", () => {
-			result = null;
-			isStarted = true;
-			createActions();
-			var time = 0;
-			// timer = setInterval(function () {
-			// 	if (time == timeInterval) {
-			// 		stopRecordingFn();
-			// 		clearInterval(timer);
-			// 	}
+			var intervalTime = 0;
+			intervalTimer.style.display = "block";
+			intervalTimer.innerHTML = intervalTime + 1;
+			startBtnTackingPhoto.style.display = "none";
+			pitchGauge.style.display = "none";
+			yawGauge.style.display = "none";
+			var starterInterval = setInterval(() => {
+				if (intervalTime === 2) {
+					result = null;
+					isStarted = true;
+					createActions();
+					var time = 0;
+					// timer = setInterval(function () {
+					// 	if (time == timeInterval) {
+					// 		stopRecordingFn();
+					// 		clearInterval(timer);
+					// 	}
 
-			// 	timeElm.innerHTML = time;
-			// 	time = time + 1;
-			// }, 1000);
-			// console.log(fps);
-			takePhotoInterval = setInterval(takepicture, 333);
-			maxYaw = 0;
-			maxPitch = 0;
-			minYaw = 0;
-			minPitch = 0;
+					// 	timeElm.innerHTML = time;
+					// 	time = time + 1;
+					// }, 1000);
+					// console.log(fps);
+					takePhotoInterval = setInterval(takepicture, 333);
+					maxYaw = 0;
+					maxPitch = 0;
+					minYaw = 0;
+					minPitch = 0;
+					intervalTimer.style.display = "none";
+					clearInterval(starterInterval);
+				} else {
+					intervalTime += 1;
+					intervalTimer.innerHTML = intervalTime + 1;
+				}
+			}, 1000);
 		});
 		var stopRecordingFn = () => {
 			dataLoading.classList.toggle("d-none");
 			clearInterval(timer);
 			clearInterval(takePhotoInterval);
-			tableTbody.innerHTML = valueTable;
+			// tableTbody.innerHTML = valueTable;
 
+			console.log(step);
 			if (step === 4) {
 				sendImage();
 			}
-			var collectedData = {
-				values: {
-					minPitch: minPitch.toFixed(2),
-					maxPitch: maxPitch.toFixed(2),
-					minYaw: minYaw.toFixed(2),
-					maxYaw: maxYaw.toFixed(2),
-				},
-				table: [...valueTableData],
-			};
+
 			step = 0;
 			isStarted = false;
 			randomNumberList = [];
@@ -541,40 +578,40 @@ const Jeeliz = () => {
 			// 	photoListEl.appendChild(img);
 			// });
 
-			gifshot.createGIF(
-				{
-					images: photoList,
-					gifWidth: screen.height / 2,
-					gifHeight: screen.height / 2,
-				},
-				function (obj) {
-					if (!obj.error) {
-						console.log("start");
-						if (result) {
-							dataLoading.classList.toggle("d-none");
-						}
-						var image = obj.image,
-							animatedImage = document.createElement("img");
-						animatedImage.src = image;
-						document.body.appendChild(animatedImage);
-						photoList = [];
-					}
-				}
-			);
-			yawMaxMin.innerHTML =
-				"max Yaw= " + maxYaw.toFixed(2) + " and min Yaw= " + minYaw.toFixed(2);
-			pitchMaxMin.innerHTML =
-				"max Pitch= " +
-				maxPitch.toFixed(2) +
-				" and min Pitch= " +
-				minPitch.toFixed(2);
+			// gifshot.createGIF(
+			// 	{
+			// 		images: photoList,
+			// 		gifWidth: screen.height / 2,
+			// 		gifHeight: screen.height / 2,
+			// 	},
+			// 	function (obj) {
+			// 		if (!obj.error) {
+			// 			console.log("start");
+			// 			if (result) {
+			// 				dataLoading.classList.toggle("d-none");
+			// 			}
+			// 			var image = obj.image,
+			// 				animatedImage = document.createElement("img");
+			// 			animatedImage.src = image;
+			// 			document.body.appendChild(animatedImage);
+			// 			photoList = [];
+			// 		}
+			// 	}
+			// );
+			// yawMaxMin.innerHTML =
+			// 	"max Yaw= " + maxYaw.toFixed(2) + " and min Yaw= " + minYaw.toFixed(2);
+			// pitchMaxMin.innerHTML =
+			// 	"max Pitch= " +
+			// 	maxPitch.toFixed(2) +
+			// 	" and min Pitch= " +
+			// 	minPitch.toFixed(2);
 		};
 		stopBtnTackingPhoto.addEventListener("click", () => {
+			stopStreamedVideo(video);
 			stopRecordingFn();
 		});
-		stopBtn.addEventListener("click", () => {
-			stopStreamedVideo(video);
-		});
+		// stopBtn.addEventListener("click", () => {
+		// });
 	}
 
 	init();
