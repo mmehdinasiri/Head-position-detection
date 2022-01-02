@@ -1,10 +1,54 @@
 import JEELIZFACEFILTER from "../static/lib/jeeliz/jeelizFaceFilter.module";
-const fs = require("fs");
-import gifshot from "gifshot";
 
 const Jeeliz = () => {
-	console.log("Jeeliz");
-	const SETTINGS = {
+	var streaming = false;
+	var ISDETECTED = false;
+	var actionDic = {
+		0: "UP",
+		1: "DOWN",
+		2: "RIGHT",
+		3: "LEFT",
+	};
+	var randomNumberList = [];
+	var randomAction = "";
+	var stateType = {
+		INIT: "init",
+		BALANCE: "balance",
+		DO_BALANCE: "doBalance",
+		BALANCED: "balanced",
+		START_ACTIONS: "startActions",
+		UP: "up",
+		DOWN: "down",
+		LEFT: "left",
+		RIGHT: "right",
+		FINISHED: "finished",
+		EMPTY: "empty",
+		SENDING: "sending",
+		FAILED: "failed",
+	};
+	var photoList = [];
+	var takePhotoInterval = null;
+	var isStart = false;
+	var isSending = false;
+	var checkBalanceTimer = null;
+	var state = stateType.INIT;
+	var CAMERA = null;
+	var step = 0;
+	var maxYaw = 0;
+	var minYaw = 0;
+	var maxPitch = 0;
+	var minPitch = 0;
+	var width = 320;
+	var height = 240;
+	var videoWidth = 320;
+	var videoHeight = 240;
+	var result = null;
+	var isStarted = false;
+	var doBalancingInterval = null;
+	var doBalancingTimer = 0;
+	var doActionInterval = null;
+	var doActionTimer = 0;
+	var SETTINGS = {
 		rotationOffsetX: 0, // negative -> look upper. in radians
 		cameraFOV: 40, // in degrees, 3D camera FOV
 		pivotOffsetYZ: [-0.2, -0.2], // position the rotation pivot along Y and Z axis
@@ -15,20 +59,6 @@ const Jeeliz = () => {
 		scale: [1, 1], // scale of the DIV along horizontal and vertical axis
 		positionOffset: [0, 0, -0.2], // set a 3D position fofset to the div
 	};
-
-	// some globalz:
-	let ISDETECTED = false;
-	let CAMERA = null;
-
-	var width = 320;
-	var height = 240;
-	var videoWidth = 320;
-	var videoHeight = 240;
-	var timer;
-	var maxYaw = 0;
-	var minYaw = 0;
-	var maxPitch = 0;
-	var minPitch = 0;
 	var currentValues = {
 		yaw: 0,
 		pitch: 0,
@@ -36,297 +66,42 @@ const Jeeliz = () => {
 	var valueTable = "";
 	var valueTableData = [];
 
-	const video = document.getElementById("video");
-	const canvas = document.getElementById("canvas");
-	const videoContainer = document.querySelector("[data-video-container]");
-	const yaw = document.querySelector("[data-yaw]");
-	const roll = document.querySelector("[data-roll]");
-	const pitch = document.querySelector("[data-pitch]");
-	const yawPinter = document.querySelector("[data-yaw-pointer]");
-	const pitchPinter = document.querySelector("[data-pitch-pointer]");
-	const startBtn = document.querySelector("[data-start]");
-	const stopBtn = document.querySelector("[data-stop]");
-	const action = document.querySelector("[data-action]");
-	const startBtnTackingPhoto = document.querySelector(
-		"[data-start-tacking-photo]"
+	var videoEl = document.querySelector("[data-video]");
+	var videoWrapperEl = document.querySelector("[data-video-actions]");
+	var videoContainerEl = document.querySelector("[data-video-container]");
+	var canvasEl = document.querySelector("[data-canvas]");
+	var yawPointerEl = document.querySelector("[data-yaw-pointer]");
+	var pitchPointerEl = document.querySelector("[data-pitch-pointer]");
+	var pitchGaugeEl = document.querySelector("[data-pitch-gauge]");
+	var yawGaugeEl = document.querySelector("[data-yaw-gauge]");
+	var startActionsTimerEl = document.querySelector(
+		"[data-start-actions-timer]"
 	);
-	const stopBtnTackingPhoto = document.querySelector(
-		"[data-stop-tacking-photo]"
-	);
-	const canvasPhoto = document.getElementById("canvas-photo");
-	const photo = document.getElementById("photo");
-	const photoListEl = document.querySelector("[data-photo-list]");
-	const dataLoading = document.querySelector("[data-loading]");
-	const dataFps = document.querySelector("[data-fps]");
-	const timeElm = document.querySelector("[data-time]");
-	// var fps = dataFps.value;
-	const yawMaxMin = document.querySelector("[yaw-max-min]");
-	const pitchMaxMin = document.querySelector("[pitch-max-min]");
-	const tableTbody = document.querySelector("[data-table-tbody]");
-	const videoWrapper = document.querySelector("[data-video-wrapper]");
-	const arrowUp = document.querySelector("[data-arrow-up]");
-	const arrowDown = document.querySelector("[data-arrow-down]");
-	const arrowLeft = document.querySelector("[data-arrow-left]");
-	const arrowRight = document.querySelector("[data-arrow-right]");
-	const intervalTimer = document.querySelector("[data-interval-timer]");
-	const pitchGauge = document.querySelector("[data-pitch-gauge]");
-	const yawGauge = document.querySelector("[data-yaw-gauge]");
-
-	// const timeIntervalElm = document.querySelector("[data-time-input]");
-	// var timeInterval = timeIntervalElm.value;
-
-	var photoList = [];
-	var takePhotoInterval = null;
-	var streaming = false;
-	var streamObj = null;
-	var result = null;
-
-	var createFormData = (propList) => {
-		var formDate = new FormData();
-		Object.keys(propList).forEach((key) => {
-			formDate.append(key, propList[key]);
-		});
-		return formDate;
-	};
-
-	var actionDic = {
-		0: "up",
-		1: "down",
-		2: "right",
-		3: "left",
-	};
-	var randomNumberList = [];
-	var randomAction = "";
-	var step = 0;
-	var currentAction = "";
-	var isStarted = false;
-
-	function createActions() {
-		var newNum = Math.random() * 3;
-		if (
-			randomNumberList.includes(newNum.toFixed()) &&
-			randomNumberList.length < 4
-		) {
-			createActions();
-		} else {
-			randomNumberList.push(newNum.toFixed());
-		}
-		if (randomNumberList.length < 4) {
-			createActions();
-		} else {
-			randomAction =
-				actionDic[randomNumberList[0]] +
-				" => " +
-				actionDic[randomNumberList[1]] +
-				" => " +
-				actionDic[randomNumberList[2]] +
-				" => " +
-				actionDic[randomNumberList[3]];
-			action.innerHTML = actionDic[randomNumberList[0]];
-			currentAction = actionDic[randomNumberList[0]];
-			console.log(actionDic);
-		}
-	}
-	function urltoFile(url, filename, mimeType) {
-		return fetch(url)
-			.then(function (res) {
-				return res.arrayBuffer();
-			})
-			.then(function (buf) {
-				return new File([buf], filename, { type: mimeType });
-			});
-	}
-	function checkAction(yaw, pitch) {
-		if (step === 4) {
-			action.innerHTML = "اتمام عملیات لطفا دکمه قرمز رنگ را فشار دهید.";
-			stopBtnTackingPhoto.classList.remove("is-disabled");
-			stopBtnTackingPhoto.classList.remove("d-none");
-		}
-		if (currentAction === "right") {
-			arrowRight.classList.remove("d-none");
-			action.innerHTML = "لطفا سر خود را به آرامی به راست بچرخانید";
-			if (yaw < -0.4) {
-				step += 1;
-				currentAction = "";
-				setTimeout(() => {
-					currentAction = actionDic[randomNumberList[step]];
-				}, 1500);
-				action.innerHTML = "انحام شد";
-				videoWrapper.classList = videoWrapper.classList + " right-action-done";
-			}
-		}
-		if (currentAction === "left") {
-			action.innerHTML = "لطفا سر خود را به آرامی به چپ بچرخانید";
-			arrowLeft.classList.remove("d-none");
-			if (yaw > 0.4) {
-				step += 1;
-				currentAction = "";
-				setTimeout(() => {
-					currentAction = actionDic[randomNumberList[step]];
-				}, 1500);
-				action.innerHTML = "انحام شد";
-				videoWrapper.classList = videoWrapper.classList + " left-action-done";
-			}
-		}
-		if (currentAction === "up") {
-			action.innerHTML = "لطفا سر خود را به آرامی به بالا ببرید";
-			arrowUp.classList.remove("d-none");
-			if (pitch > 0.1) {
-				step += 1;
-				currentAction = "";
-				setTimeout(() => {
-					currentAction = actionDic[randomNumberList[step]];
-				}, 1500);
-				action.innerHTML = "انحام شد";
-				videoWrapper.classList = videoWrapper.classList + " up-action-done";
-			}
-		}
-		if (currentAction === "down") {
-			action.innerHTML = "لطفا سر خود را به آرامی به پایین ببرید";
-			arrowDown.classList.remove("d-none");
-			if (pitch < -0.45) {
-				step += 1;
-				currentAction = "";
-				setTimeout(() => {
-					currentAction = actionDic[randomNumberList[step]];
-				}, 1500);
-				action.innerHTML = "انحام شد";
-				videoWrapper.classList = videoWrapper.classList + " down-action-done";
-			}
-		}
-		// action.innerHTML = currentAction;
-	}
-	async function sendImage() {
-		const fixedFrames = {};
-		photoList.forEach((frame, idx) => {
-			fixedFrames[idx] = frame.split(",")[1];
-		});
-
-		var file = await urltoFile(photoList[0], "imagefile.jpeg", "image/jpeg");
-
-		var formData = new FormData();
-		formData.append("image", file, "/path/to/file");
-		// formData.append("fps", fps === "333" ? "3" : "4");
-		formData.append("fps", "3");
-		formData.append(
-			"pose_action",
-			randomAction
-				.split(" => ")
-				.map((act) => act.split("")[0])
-				.join("")
-		);
-		formData.append(
-			"values",
-			JSON.stringify({
-				minPitch: minPitch.toFixed(2),
-				maxPitch: maxPitch.toFixed(2),
-				minYaw: minYaw.toFixed(2),
-				maxYaw: maxYaw.toFixed(2),
-			})
-		);
-		formData.append("table", JSON.stringify([...valueTableData]));
-		formData.append("id", new Date().getTime());
-		formData.append("frames", JSON.stringify(fixedFrames));
-
-		var requestOptions = {
-			method: "POST",
-			body: formData,
-			redirect: "follow",
-		};
-		action.innerHTML = "در حال ارسال تصاویر";
-		fetch("https://reg-api-test.emofid.com/api/ekyc", requestOptions)
-			.then((response) => response.text())
-			.then((res) => {
-				console.log("done");
-				dataLoading.classList.toggle("d-none");
-				result = JSON.parse(res);
-				console.log(result);
-				action.innerHTML =
-					"زنده بودن: " +
-					result.liveness +
-					" // " +
-					"درستی حرکات: " +
-					result.actions_are_matched +
-					" // " +
-					"شباهت چهره: " +
-					result.face_similarity;
-			})
-			.catch((error) => {
-				console.log("faild");
-				dataLoading.classList.toggle("d-none");
-				action.innerHTML = "error occurs";
-				console.log("error", error);
-			});
-	}
-	function clearphoto() {
-		var context = canvas.getContext("2d");
-		context.fillStyle = "#AAA";
-		context.fillRect(0, 0, canvas.width, canvas.height);
-
-		var data = canvas.toDataURL("image/png");
-		photo.setAttribute("src", data);
-	}
-	function takepicture() {
-		var context = canvasPhoto.getContext("2d");
-		console.log("start taking photo");
-		if (width && height) {
-			canvasPhoto.width = videoWidth;
-			canvasPhoto.height = videoHeight;
-			context.drawImage(video, 0, 0, videoWidth, videoHeight);
-
-			var data = canvasPhoto.toDataURL("image/jpeg");
-			// photo.setAttribute("src", data);
-
-			photoList.push(data);
-			// console.log(photoList);
-			valueTableData.push({
-				yaw: currentValues.yaw,
-				pitch: currentValues.pitch,
-				action: currentAction,
-			});
-			var tempRow =
-				"<tr><td>" +
-				currentValues.yaw +
-				"</td><td>" +
-				currentValues.pitch +
-				"</td><td>" +
-				currentAction +
-				"</td></tr>";
-			valueTable += tempRow;
-		} else {
-			clearphoto();
-		}
-	}
-	async function webCam() {
-		// var correctHeight = window.innerHeight - 190;
-		var correctHeight = screen.height - 190;
-		console.log("screen", screen);
-		//fix video size base on device screen size and device type
+	var canvasPhotoEl = document.querySelector("[data-canvas-photo]");
+	var actionTextEl = document.querySelector("[data-action-text]");
+	var arrowUp = document.querySelector("[data-arrow-up]");
+	var arrowDown = document.querySelector("[data-arrow-down]");
+	var arrowLeft = document.querySelector("[data-arrow-left]");
+	var arrowRight = document.querySelector("[data-arrow-right]");
+	var timerEl = document.querySelector("[data-timer]");
+	var webCam = function () {
 		if (screen.width <= 720) {
-			console.log("--------------");
-			// videoContainer.style.height = screen.height / 1.75 + "px";
-			// videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
-
-			videoContainer.style.height = screen.width / 1.25 + "px";
-			videoContainer.style.width = screen.width / 1.25 + "px";
+			videoContainerEl.style.height = screen.width / 1.25 + "px";
+			videoContainerEl.style.width = screen.width / 1.25 + "px";
 
 			videoWidth = (screen.height / 1.75) * 0.75;
 			videoHeight = screen.height / 1.75;
 		} else {
-			// videoContainer.style.height = screen.height / 1.75 + "px";
-			// videoContainer.style.width = (screen.height / 1.75) * 0.75 + "px";
 			videoWidth = (screen.height / 1.75) * 0.75;
 			videoHeight = screen.height / 1.75;
 
-			videoContainer.style.height = screen.height / 2 + "px";
-			videoContainer.style.width = screen.height / 2 + "px";
+			videoContainerEl.style.height = screen.height / 2 + "px";
+			videoContainerEl.style.width = screen.height / 2 + "px";
 		}
 
 		const constraints = {
 			audio: true,
 			video: {
-				// width: videoWidth,
-				// height: videoHeight,
 				facingMode: "user",
 				frameRate: { max: 30 },
 			},
@@ -334,53 +109,77 @@ const Jeeliz = () => {
 		navigator.mediaDevices
 			.getUserMedia(constraints)
 			.then(function (stream) {
-				video.srcObject = stream;
+				videoEl.srcObject = stream;
 				streamObj = stream;
-				video.play();
+				videoEl.play();
 			})
 			.catch(function (err) {
 				console.log("An error occurred: " + err);
 			});
 
 		const ready = new Promise((resolve) => {
-			video.onloadeddata = () => resolve(true);
-		});
+			videoEl.onloadeddata = () => resolve(true);
+		}).then(function () {
+			canvas.width = videoWidth;
+			canvas.height = videoHeight;
+			videoEl.addEventListener(
+				"canplay",
+				function (ev) {
+					if (!streaming) {
+						height = videoHeight;
+						width = videoWidth;
 
-		await ready; // wait until stream is ready
-		canvas.width = videoWidth;
-		canvas.height = videoHeight;
-		video.addEventListener(
-			"canplay",
-			function (ev) {
-				if (!streaming) {
-					height = videoHeight;
-					width = videoWidth;
+						if (isNaN(height)) {
+							height = width / (4 / 3);
+						}
 
-					if (isNaN(height)) {
-						height = width / (4 / 3);
+						videoEl.setAttribute("width", width);
+						videoEl.setAttribute("height", height);
+						canvasPhotoEl.setAttribute("width", width);
+						canvasPhotoEl.setAttribute("height", height);
+						streaming = true;
+						runDetector();
 					}
-
-					video.setAttribute("width", width);
-					video.setAttribute("height", height);
-					canvasPhoto.setAttribute("width", width);
-					canvasPhoto.setAttribute("height", height);
-					streaming = true;
-				}
+				},
+				false
+			);
+		});
+	};
+	var runDetector = function () {
+		JEELIZFACEFILTER.init({
+			maxFacesDetected: 1,
+			animateDelay: 1, // let small delay to avoid DOM freeze
+			canvasId: "canvas",
+			NNCPath: "./static/lib/jeeliz/neuralNets/",
+			videoSettings: {
+				videoElement: videoEl,
+				facingMode: "user",
+				flipX: false,
 			},
-			false
-		);
-	}
-	// build the 3D. called once when Jeeliz Face Filter is OK:
-	function init_scene(spec) {
-		// init projection parameters:
-		const domRect = spec.canvasElement.getBoundingClientRect();
-		const width = domRect.width;
-		const height = domRect.height;
+			callbackReady: function (errCode, spec) {
+				console.log("callbackReady");
+				init_scene(spec);
+			},
 
-		const aspectRatio = width / height;
-		const w2 = width / 2,
+			callbackTrack: callbackTrack,
+			successCallback: function () {
+				console.log("INFO in index.js: successCallback() called");
+			},
+			errorCallback: function (errCode) {
+				console.log("ERROR in index.js: ", errCode);
+			},
+		});
+	};
+	var init_scene = function (spec) {
+		// init projection parameters:
+		var domRect = spec.canvasElement.getBoundingClientRect();
+		var width = domRect.width;
+		var height = domRect.height;
+
+		var aspectRatio = width / height;
+		var w2 = width / 2,
 			h2 = height / 2;
-		const perspectivePx = Math.round(
+		var perspectivePx = Math.round(
 			Math.pow(w2 * w2 + h2 * h2, 0.5) /
 				Math.tan((SETTINGS.cameraFOV * Math.PI) / 180)
 		);
@@ -389,8 +188,8 @@ const Jeeliz = () => {
 			aspect: aspectRatio,
 			fov: SETTINGS.cameraFOV,
 		};
-	} //end init_scene()
-	function callbackTrack(detectState) {
+	};
+	var callbackTrack = function (detectState) {
 		if (
 			ISDETECTED &&
 			detectState.detected <
@@ -408,45 +207,24 @@ const Jeeliz = () => {
 		}
 		if (ISDETECTED) {
 			// move the cube in order to fit the head:
-			const tanFOV = Math.tan((CAMERA.aspect * CAMERA.fov * Math.PI) / 360); //tan(FOV/2), in radians
-			const W = detectState.s; //relative width of the detection window (1-> whole width of the detection window)
-			const D = 1 / (2 * W * tanFOV); //distance between the front face of the cube and the camera
+			var tanFOV = Math.tan((CAMERA.aspect * CAMERA.fov * Math.PI) / 360); //tan(FOV/2), in radians
+			var W = detectState.s; //relative width of the detection window (1-> whole width of the detection window)
+			var D = 1 / (2 * W * tanFOV); //distance between the front face of the cube and the camera
 
 			// coords in 2D of the center of the detection window in the viewport:
-			const xv = detectState.x;
-			const yv = detectState.y;
+			var xv = detectState.x;
+			var yv = detectState.y;
 
 			// coords in 3D of the center of the cube (in the view coordinates system):
-			const z = -D - 0.5; // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
-			const x = xv * D * tanFOV;
-			const y = (yv * D * tanFOV) / CAMERA.aspect;
-			// pitch.innerHTML = x.toFixed(2);
-			// roll.innerHTML = z.toFixed(2);
+			var z = -D - 0.5; // minus because view coordinate system Z goes backward. -0.5 because z is the coord of the center of the cube (not the front face)
+			var x = xv * D * tanFOV;
+			var y = (yv * D * tanFOV) / CAMERA.aspect;
+			var yawNumber = Number(-x.toFixed(2) * 72 + 50).toFixed(0);
+			var pitchNumber = Number(y.toFixed(2) * -100 + 20).toFixed(0);
 			currentValues = {
 				yaw: x.toFixed(2),
 				pitch: y.toFixed(2),
 			};
-			let yawNumber = Number(-x.toFixed(2) * 72 + 50).toFixed(0);
-			let pitchNumber = Number(y.toFixed(2) * -100 + 20).toFixed(0);
-			if (isStarted || step < 4) {
-				checkAction(x.toFixed(2), y.toFixed(2));
-			}
-			// yaw.innerHTML =
-			// 	"yaw: " +
-			// 	x.toFixed(2) +
-			// 	"    converted: " +
-			// 	Number(x.toFixed(2) * 72 + 50).toFixed(0);
-			// pitch.innerHTML =
-			// 	"pitch: " +
-			// 	y.toFixed(2) +
-			// 	"    converted: " +
-			// 	Number(y.toFixed(2) * -100 + 50).toFixed(0);
-
-			yawNumber = yawNumber > 100 ? 100 : yawNumber < 0 ? 0 : yawNumber;
-			pitchNumber = pitchNumber > 100 ? 100 : pitchNumber < 0 ? 0 : pitchNumber;
-
-			yawPinter.style.left = yawNumber + "%";
-			pitchPinter.style.top = pitchNumber + "%";
 			if (x > 0 && x > maxYaw) {
 				maxYaw = x;
 			}
@@ -460,160 +238,344 @@ const Jeeliz = () => {
 			if (y < 0 && y < minPitch) {
 				minPitch = y;
 			}
-		}
-	}
-	async function main(errCode, bestVideoSettings) {
-		action.innerHTML =
-			"پیش از شروع حرکات با جابجایی سر خود دایره‌های قرمز را در محدود سبز قرار دهید";
-
-		dataLoading.classList.remove("d-none");
-		await webCam(video);
-		if (errCode) {
-			alert(errCode);
-			return;
-		}
-		JEELIZFACEFILTER.init({
-			maxFacesDetected: 1,
-			animateDelay: 1, // let small delay to avoid DOM freeze
-			canvasId: "canvas",
-			NNCPath: "./static/lib/jeeliz/neuralNets/",
-			videoSettings: {
-				videoElement: video,
-				facingMode: "user",
-				flipX: false,
-			},
-			callbackReady: function (errCode, spec) {
-				console.log("callbackReady");
-				dataLoading.classList = "loading d-none";
-				init_scene(spec);
-			},
-
-			callbackTrack: callbackTrack,
-			successCallback: function () {
-				console.log("INFO in index.js: successCallback() called");
-			},
-			errorCallback: function (errCode) {
-				console.log("ERROR in index.js: ", errCode);
-			},
-		});
-		videoContainer.classList.remove("d-none");
-		videoContainer.classList += " d-block";
-	}
-	async function stopStreamedVideo(videoElem) {
-		await videoElem.pause();
-		const stream = videoElem.srcObject;
-		const tracks = stream.getTracks();
-
-		tracks.forEach(function (track) {
-			track.stop();
-		});
-
-		// videoElem.srcObject = null;
-	}
-
-	function init() {
-		main();
-		// dataFps.addEventListener("change", function () {
-		// 	fps = this.value;
-		// });
-		// timeIntervalElm.addEventListener("input", function () {
-		// 	timeInterval = this.value;
-		// });
-
-		startBtnTackingPhoto.addEventListener("click", () => {
-			var intervalTime = 0;
-			intervalTimer.style.display = "block";
-			intervalTimer.innerHTML = intervalTime + 1;
-			startBtnTackingPhoto.style.display = "none";
-			pitchGauge.style.display = "none";
-			yawGauge.style.display = "none";
-			var starterInterval = setInterval(() => {
-				if (intervalTime === 2) {
-					result = null;
-					isStarted = true;
-					createActions();
-					var time = 0;
-					// timer = setInterval(function () {
-					// 	if (time == timeInterval) {
-					// 		stopRecordingFn();
-					// 		clearInterval(timer);
-					// 	}
-
-					// 	timeElm.innerHTML = time;
-					// 	time = time + 1;
-					// }, 1000);
-					// console.log(fps);
-					takePhotoInterval = setInterval(takepicture, 333);
-					maxYaw = 0;
-					maxPitch = 0;
-					minYaw = 0;
-					minPitch = 0;
-					intervalTimer.style.display = "none";
-					clearInterval(starterInterval);
-				} else {
-					intervalTime += 1;
-					intervalTimer.innerHTML = intervalTime + 1;
-				}
-			}, 1000);
-		});
-		var stopRecordingFn = () => {
-			dataLoading.classList.toggle("d-none");
-			clearInterval(timer);
-			clearInterval(takePhotoInterval);
-			// tableTbody.innerHTML = valueTable;
-
-			console.log(step);
-			if (step === 4) {
-				sendImage();
+			if (state === stateType.FAILED) {
+				selectHint();
+				return false;
+			}
+			if (state === stateType.INIT) {
+				isBalance(yawNumber, pitchNumber);
+				videoContainerEl.classList.remove("isLoading");
+			}
+			if (state === stateType.BALANCE) {
+				showIndicator();
+				selectHint();
+			}
+			if (state === stateType.DO_BALANCE) {
+				doBalance(yawNumber, pitchNumber);
+				selectHint();
+			}
+			if (state === stateType.START_ACTIONS && !isStart) {
+				isStart = true;
+				selectHint();
+				startPreActionTimer();
 			}
 
-			step = 0;
-			isStarted = false;
-			randomNumberList = [];
-			// gifshot.stopVideoStreaming();
-			// photoList.forEach((item) => {
-			// 	var img = document.createElement("img");
-			// 	img.classList = "photo-item";
-			// 	img.src = item;
-			// 	photoListEl.appendChild(img);
-			// });
+			if (isStart && step < 4 && randomNumberList.length === 4) {
+				selectHint();
+				checkAction(x.toFixed(2), y.toFixed(2));
+			}
+			if (step === 4 && isStart) {
+				state = stateType.FINISHED;
+				selectHint();
+				isStart = false;
+			}
+			if (step === 4 && !isSending && randomNumberList.length === 4) {
+				selectHint();
+				isSending = true;
+				timerEl.classList = timerEl.classList + " d-none";
+				clearInterval(doActionInterval);
+				setTimeout(function () {
+					videoContainerEl.classList =
+						videoContainerEl.classList + " isLoading";
+					state = stateType.SENDING;
 
-			// gifshot.createGIF(
-			// 	{
-			// 		images: photoList,
-			// 		gifWidth: screen.height / 2,
-			// 		gifHeight: screen.height / 2,
-			// 	},
-			// 	function (obj) {
-			// 		if (!obj.error) {
-			// 			console.log("start");
-			// 			if (result) {
-			// 				dataLoading.classList.toggle("d-none");
-			// 			}
-			// 			var image = obj.image,
-			// 				animatedImage = document.createElement("img");
-			// 			animatedImage.src = image;
-			// 			document.body.appendChild(animatedImage);
-			// 			photoList = [];
-			// 		}
-			// 	}
-			// );
-			// yawMaxMin.innerHTML =
-			// 	"max Yaw= " + maxYaw.toFixed(2) + " and min Yaw= " + minYaw.toFixed(2);
-			// pitchMaxMin.innerHTML =
-			// 	"max Pitch= " +
-			// 	maxPitch.toFixed(2) +
-			// 	" and min Pitch= " +
-			// 	minPitch.toFixed(2);
-		};
-		stopBtnTackingPhoto.addEventListener("click", () => {
-			stopStreamedVideo(video);
-			stopRecordingFn();
+					selectHint();
+					sendImage();
+				}, 2000);
+			}
+		}
+	};
+	var isBalance = function (yawNumber, pitchNumber) {
+		if (
+			45 <= yawNumber &&
+			yawNumber <= 55 &&
+			45 <= pitchNumber &&
+			pitchNumber <= 55
+		) {
+			state = stateType.ACTIONS;
+		}
+		state = stateType.BALANCE;
+	};
+	var showIndicator = function () {
+		pitchGaugeEl.classList.remove("d-none");
+		yawGaugeEl.classList.remove("d-none");
+		state = stateType.DO_BALANCE;
+	};
+	var hideIndicator = function () {
+		pitchGaugeEl.classList = pitchGaugeEl.classList + " d-none";
+		yawGaugeEl.classList = yawGaugeEl.classList + " d-none";
+	};
+	var doBalance = function (yawNumber, pitchNumber) {
+		var fixedYawNumber = yawNumber > 100 ? 100 : yawNumber < 0 ? 0 : yawNumber;
+		var FixedPitchNumber =
+			pitchNumber > 100 ? 100 : pitchNumber < 0 ? 0 : pitchNumber;
+		yawPointerEl.style.left = fixedYawNumber + "%";
+		pitchPointerEl.style.top = FixedPitchNumber + "%";
+
+		if (40 <= yawNumber && yawNumber <= 50) {
+			yawPointerEl.style.background = "green";
+		} else {
+			yawPointerEl.style.background = "white";
+		}
+		if (40 <= pitchNumber && pitchNumber <= 50) {
+			pitchPointerEl.style.background = "green";
+		} else {
+			pitchPointerEl.style.background = "white";
+		}
+		if (!doBalancingInterval && doBalancingTimer === 0) {
+			doBalancingInterval = setInterval(() => {
+				if (doBalancingTimer === 10) {
+					state = stateType.BALANCED;
+					checkBalanceTimer = setTimeout(function () {
+						state = stateType.START_ACTIONS;
+						hideIndicator();
+						timerEl.classList = timerEl.classList + " d-none";
+					}, 1000);
+					clearInterval(doBalancingInterval);
+				} else {
+					doBalancingTimer += 1;
+					timerEl.classList.remove("d-none");
+					timerEl.innerHTML = doBalancingTimer;
+				}
+			}, 1000);
+		}
+		if (
+			45 <= yawNumber &&
+			yawNumber <= 55 &&
+			45 <= pitchNumber &&
+			pitchNumber <= 55
+		) {
+			if (!checkBalanceTimer) {
+				state = stateType.BALANCED;
+				checkBalanceTimer = setTimeout(function () {
+					state = stateType.START_ACTIONS;
+					hideIndicator();
+					timerEl.classList = timerEl.classList + " d-none";
+					clearInterval(doBalancingInterval);
+					doBalancingInterval = null;
+					doBalancingTimer = 0;
+				}, 1000);
+			} else {
+				clearTimeout(checkBalance);
+			}
+		}
+	};
+	var selectHint = function () {
+		var stateHintEl = document.querySelectorAll("[data-hint=" + state + "]");
+		var allHints = document.querySelectorAll("[data-hint]");
+		allHints.forEach((element) => {
+			if (
+				element.className.split(" ").indexOf("d-none") === -1 &&
+				stateHintEl[0] !== element
+			) {
+				element.classList = element.classList + " d-none";
+			}
 		});
-		// stopBtn.addEventListener("click", () => {
-		// });
-	}
 
+		stateHintEl.forEach((element) => {
+			if (element.className.split(" ").indexOf("d-none") >= 0) {
+				element.classList.remove("d-none");
+			}
+		});
+	};
+	var startPreActionTimer = function () {
+		var intervalTime = 5;
+		startActionsTimerEl.classList.remove("d-none");
+		startActionsTimerEl.innerHTML = intervalTime;
+		var starterInterval = setInterval(() => {
+			if (intervalTime === 1) {
+				result = null;
+				isStarted = true;
+				createActions();
+				takePhotoInterval = setInterval(takingPicture, 333);
+				startActionsTimerEl.classList =
+					startActionsTimerEl.classList + " d-none";
+				clearInterval(starterInterval);
+				startActionTimer();
+			} else {
+				intervalTime -= 1;
+				startActionsTimerEl.innerHTML = intervalTime;
+			}
+		}, 1000);
+	};
+	var startActionTimer = function () {
+		timerEl.innerHTML = 1;
+		timerEl.classList.remove("d-none");
+		if (!doActionInterval) {
+			doActionInterval = setInterval(() => {
+				if (doActionTimer === 25) {
+					timerEl.classList = timerEl.classList + " d-none";
+					clearInterval(doActionInterval);
+					state = stateType.FAILED;
+					document.querySelectorAll("[data-arrow]").forEach((el) => {
+						if (el.className.split(" ").indexOf("d-none") === -1) {
+							el.classList = el.classList + " d-none";
+						}
+					});
+				} else {
+					doActionTimer += 1;
+					timerEl.innerHTML = doActionTimer;
+				}
+			}, 1000);
+		}
+	};
+	var createActions = function () {
+		var newNum = Math.random() * 3;
+		if (
+			randomNumberList.includes(newNum.toFixed()) &&
+			randomNumberList.length < 4
+		) {
+			createActions();
+		} else {
+			randomNumberList.push(newNum.toFixed());
+		}
+		if (randomNumberList.length < 4) {
+			createActions();
+		} else {
+			state = stateType[actionDic[randomNumberList[0]]];
+		}
+	};
+	var takingPicture = function () {
+		var context = canvasPhotoEl.getContext("2d");
+		if (width && height) {
+			canvasPhotoEl.width = videoWidth;
+			canvasPhotoEl.height = videoHeight;
+			context.drawImage(video, 0, 0, videoWidth, videoHeight);
+			var data = canvasPhotoEl.toDataURL("image/jpeg");
+			photoList.push(data);
+			valueTableData.push({
+				yaw: currentValues.yaw,
+				pitch: currentValues.pitch,
+				action: state,
+			});
+		} else {
+			clearPhoto();
+		}
+	};
+	var clearPhoto = function () {
+		var context = canvas.getContext("2d");
+		context.fillStyle = "#AAA";
+		context.fillRect(0, 0, canvas.width, canvas.height);
+		var data = canvas.toDataURL("image/png");
+		photo.setAttribute("src", data);
+	};
+	var checkAction = function (yaw, pitch) {
+		if (state === "right") {
+			arrowRight.classList.remove("d-none");
+			if (yaw < -0.4) {
+				step += 1;
+				state = stateType.EMPTY;
+				setTimeout(() => {
+					state = stateType[actionDic[randomNumberList[step]]];
+				}, 1500);
+				videoWrapperEl.classList =
+					videoWrapperEl.classList + " right-action-done";
+			}
+		}
+		if (state === "left") {
+			arrowLeft.classList.remove("d-none");
+			if (yaw > 0.4) {
+				step += 1;
+				state = stateType.EMPTY;
+				setTimeout(() => {
+					state = stateType[actionDic[randomNumberList[step]]];
+				}, 1500);
+				videoWrapperEl.classList =
+					videoWrapperEl.classList + " left-action-done";
+			}
+		}
+		if (state === "up") {
+			arrowUp.classList.remove("d-none");
+			if (pitch > 0.1) {
+				step += 1;
+				state = stateType.EMPTY;
+				setTimeout(() => {
+					state = stateType[actionDic[randomNumberList[step]]];
+				}, 1500);
+				videoWrapperEl.classList = videoWrapperEl.classList + " up-action-done";
+			}
+		}
+		if (state === "down") {
+			arrowDown.classList.remove("d-none");
+			if (pitch < -0.45) {
+				step += 1;
+				state = stateType.EMPTY;
+				setTimeout(() => {
+					state = stateType[actionDic[randomNumberList[step]]];
+				}, 1500);
+				videoWrapperEl.classList =
+					videoWrapperEl.classList + " down-action-done";
+			}
+		}
+	};
+	var urltoFile = function (url, filename, mimeType) {
+		return fetch(url)
+			.then(function (res) {
+				return res.arrayBuffer();
+			})
+			.then(function (buf) {
+				return new File([buf], filename, { type: mimeType });
+			});
+	};
+	var sendImage = function () {
+		const fixedFrames = {};
+		photoList.forEach((frame, idx) => {
+			fixedFrames[idx] = frame.split(",")[1];
+		});
+		var randomAction =
+			actionDic[randomNumberList[0]] +
+			"," +
+			actionDic[randomNumberList[1]] +
+			"," +
+			actionDic[randomNumberList[2]] +
+			"," +
+			actionDic[randomNumberList[3]];
+		urltoFile(photoList[0], "imagefile.jpeg", "image/jpeg").then(function (
+			file
+		) {
+			var formData = new FormData();
+			formData.append("image", file, "/path/to/file");
+			formData.append("fps", "3");
+			formData.append(
+				"pose_action",
+				randomAction
+					.split(",")
+					.map((act) => act.split("")[0])
+					.join("")
+			);
+			formData.append(
+				"values",
+				JSON.stringify({
+					minPitch: minPitch.toFixed(2),
+					maxPitch: maxPitch.toFixed(2),
+					minYaw: minYaw.toFixed(2),
+					maxYaw: maxYaw.toFixed(2),
+				})
+			);
+			formData.append("table", JSON.stringify([...valueTableData]));
+			formData.append("id", new Date().getTime());
+			formData.append("frames", JSON.stringify(fixedFrames));
+
+			var requestOptions = {
+				method: "POST",
+				body: formData,
+				redirect: "follow",
+			};
+			fetch("https://reg-api-test.emofid.com/api/ekyc", requestOptions)
+				.then((response) => response.text())
+				.then((res) => {
+					result = JSON.parse(res);
+				})
+				.catch((error) => {
+					console.log("faild");
+					console.log("error", error);
+				});
+		});
+	};
+	var init = function () {
+		webCam();
+		selectHint();
+	};
 	init();
 };
 
